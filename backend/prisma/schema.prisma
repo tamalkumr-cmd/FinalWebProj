@@ -20,24 +20,29 @@ model User {
   isVerified      Boolean   @default(false)
   
   // 📸 BIOMETRIC VISUALS
-  photoUrl        String?   // Renamed from avatarUrl to match our logic
+  photoUrl        String?   
+
+  // 🟢 LIVE STATUS (Tactical Suite)
+  isOnline        Boolean   @default(false)
+  lastSeen        DateTime  @default(now())
 
   // 🎖️ PERSONNEL DATA
   empId           String?   @unique
   designation     String?   @default("FLIGHT_OFFICER")
   bio             String?   @db.Text
+  role            String    @default("PASSENGER") // PASSENGER / ADMIN / AIRLINE / CREW
 
-  // ✈️ Role: PASSENGER / ADMIN / AIRLINE / CREW
-  role            String    @default("PASSENGER") 
+  // --- 🛰️ COMMS RELATIONS ---
+  sentMessages     Message[] @relation("SentMessages")
+  receivedMessages Message[] @relation("ReceivedMessages")
+  initiatedCalls   Call[]    @relation("CallsStarted")
+  receivedCalls    Call[]    @relation("CallsReceived")
 
-  // Relations
-  listings        Listing[] @relation("SellerListings") 
-  orders          Order[]   @relation("BuyerOrders")    
-  reviews         Review[]  @relation("UserReviews")
-  messages        Message[] @relation("SentMessages")
-  
-  // 👥 Crew assignment
-  assignedFlights Listing[] @relation("FlightCrew")
+  // --- 📦 OPS RELATIONS ---
+  listings         Listing[] @relation("SellerListings") 
+  orders           Order[]   @relation("BuyerOrders")    
+  reviews          Review[]  @relation("UserReviews")
+  assignedFlights  Listing[] @relation("FlightCrew")
 }
 
 // ==========================================
@@ -69,14 +74,14 @@ model Seat {
 // 🚀 FLIGHT OPERATIONS (THE SIMULATION ENGINE)
 // ==========================================
 model Listing {
-  id             String   @id @default(uuid())
-  airline        String   // Callsign
+  id              String   @id @default(uuid())
+  airline         String   // Callsign
   
   // Hardware Specs
-  manufacturer   String   @default("BOEING")
-  aircraftModel  String   @default("B737-MAX")
-  engineType     String   @default("CFM LEAP-1B")
-  vesselType     String   @default("PASSENGER") // PASSENGER or CARGO
+  manufacturer    String   @default("BOEING")
+  aircraftModel   String   @default("B737-MAX")
+  engineType      String   @default("CFM LEAP-1B")
+  vesselType      String   @default("PASSENGER") // PASSENGER or CARGO
   
   // 📍 Static Mission Coordinates (Flight Plan)
   source          String
@@ -131,7 +136,7 @@ model Listing {
   images          ListingImage[]
   orders          Order[]
   reviews         Review[]
-  messages        Message[]
+  messages        Message[] @relation("ListingContext")
 }
 
 // ==========================================
@@ -173,19 +178,47 @@ model ListingImage {
 }
 
 // ==========================================
-// 💬 COMMUNICATION & SECURITY
+// 💬 COMMUNICATION & SECURITY (UPGRADED)
 // ==========================================
-model Message {
-  id        String   @id @default(uuid())
-  text      String
-  createdAt DateTime @default(now())
-  isSeen    Boolean  @default(false)
-  senderId  String
-  listingId String
-  sender    User     @relation("SentMessages", fields: [senderId], references: [id])
-  listing   Listing  @relation(fields: [listingId], references: [id])
 
-  @@index([listingId])
+model Message {
+  id          String   @id @default(uuid())
+  text        String?  @db.Text // Optional to support image-only messages
+  imageUrl    String?  // 🖼️ Media support for flight photos/logs
+  createdAt   DateTime @default(now())
+  isSeen      Boolean  @default(false)
+  
+  // Who sent it
+  senderId    String
+  sender      User     @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  
+  // Who receives it
+  receiverId  String
+  receiver    User     @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  // Contextualize the chat to a specific flight
+  listingId   String?
+  listing     Listing? @relation("ListingContext", fields: [listingId], references: [id])
+
+  @@index([senderId])
+  @@index([receiverId])
+}
+
+model Call {
+  id          String   @id @default(uuid())
+  type        String   @default("VOICE") // VOICE / VIDEO
+  status      String   @default("MISSED") // COMPLETED / MISSED / REJECTED
+  duration    Int      @default(0) // Seconds
+  createdAt   DateTime @default(now())
+
+  callerId    String
+  caller      User     @relation("CallsStarted", fields: [callerId], references: [id])
+  
+  receiverId  String
+  receiver    User     @relation("CallsReceived", fields: [receiverId], references: [id])
+
+  @@index([callerId])
+  @@index([receiverId])
 }
 
 model Otp {

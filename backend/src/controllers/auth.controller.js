@@ -5,9 +5,9 @@ import { generateOtp } from "../utils/generateOtp.js";
 import { sendMail } from "../utils/mailer.js";
 import admin from "../config/firebaseAdmin.js";
 
-// =======================
-// REGISTER
-// =======================
+// ==========================================
+// 🚀 REGISTER (INITIATE HANDSHAKE)
+// ==========================================
 export async function register(req, res) {
     try {
         const { email, password } = req.body;
@@ -17,40 +17,42 @@ export async function register(req, res) {
 
         const existing = await prisma.user.findUnique({ where: { email } });
         if (existing)
-            return res.status(400).json({ error: "User already exists" });
+            return res.status(400).json({ error: "Personnel record already exists for this email." });
 
         const hash = await bcrypt.hash(password, 10);
         const code = String(generateOtp());
 
-        // Delete old OTPs for this email
+        // Cleanup old attempts
         await prisma.otp.deleteMany({ where: { email } });
 
-        // Store OTP + hashed password TEMPORARILY
+        // Store OTP + Hash with a 5-minute window (Preventing Timeout)
         await prisma.otp.create({
             data: {
                 email,
                 code,
                 password: hash,
-                expiresAt: new Date(Date.now() + 1 * 60 * 1000), // 1 minute
+                expiresAt: new Date(Date.now() + 5 * 60 * 1000), // 5 MINUTES
             },
         });
 
         await sendMail(
             email,
-            "Your OTP",
-            `<h1>Your OTP is: ${code}</h1><p>Valid for 1 minute.</p>`
+            "Sky_Link.os // Verification Code",
+            `<h1>Authentication Required</h1>
+             <p>Your unique access code is: <strong>${code}</strong></p>
+             <p>This frequency is active for 5 minutes.</p>`
         );
 
-        res.json({ message: "OTP sent to email" });
+        res.json({ message: "OTP transmitted to email." });
     } catch (err) {
-        console.error("REGISTER ERROR:", err);
-        res.status(500).json({ error: "Register failed" });
+        console.error("REGISTER_ERROR:", err);
+        res.status(500).json({ error: "Failed to initiate registration." });
     }
 }
 
-// =======================
-// VERIFY OTP
-// =======================
+// ==========================================
+// 🔑 VERIFY OTP (SYNC & AUTO-LOGIN)
+// ==========================================
 export async function verifyOtp(req, res) {
     try {
         const { email, code } = req.body;
@@ -60,41 +62,56 @@ export async function verifyOtp(req, res) {
 
         const otp = await prisma.otp.findFirst({
             where: { email },
-            orderBy: { expiresAt: "desc" },
+            orderBy: { createdAt: "desc" },
         });
 
-        if (!otp) return res.status(400).json({ error: "Invalid OTP" });
+        if (!otp) return res.status(400).json({ error: "No active verification found." });
 
-        if (otp.expiresAt < new Date()) {
+        // 🕒 Check Expiration
+        if (new Date() > new Date(otp.expiresAt)) {
             await prisma.otp.deleteMany({ where: { email } });
-            return res.status(400).json({ error: "OTP expired. Register again." });
+            return res.status(400).json({ error: "TRANSMISSION_TIMEOUT: Code expired." });
         }
 
+        // 🛡️ Verify Match
         if (String(code).trim() !== String(otp.code).trim())
-            return res.status(400).json({ error: "Invalid OTP" });
+            return res.status(400).json({ error: "Invalid verification code." });
 
-        // Create user
-        await prisma.user.create({
+        // 👤 Create Personnel Profile
+        const user = await prisma.user.create({
             data: {
                 email,
                 password: otp.password,
                 isVerified: true,
+                name: email.split("@")[0],
+                designation: "FLIGHT_OFFICER",
             },
         });
 
-        // Cleanup OTP
+        // Cleanup
         await prisma.otp.deleteMany({ where: { email } });
 
-        res.json({ message: "Account created successfully" });
+        // 🎟️ GENERATE PASSPORT (JWT) - Fixes 401 Dashboard Error
+        const token = jwt.sign({ id: user.id, email: user.email },
+            process.env.JWT_SECRET, { expiresIn: "7d" }
+        );
+
+        res.json({
+            message: "Signal Verified. Welcome to Sky_Link.",
+            token,
+            user: { id: user.id, email: user.email }
+        });
+
     } catch (err) {
-        console.error("VERIFY ERROR:", err);
-        res.status(500).json({ error: "OTP verification failed" });
+        console.error("VERIFY_ERROR:", err);
+        if (err.code === 'P2002') return res.status(400).json({ error: "User already registered." });
+        res.status(500).json({ error: "Verification process failed." });
     }
 }
 
-// =======================
-// LOGIN (Email + Password)
-// =======================
+// ==========================================
+// 🔐 LOGIN (SECURE CHANNEL)
+// ==========================================
 export async function login(req, res) {
     try {
         const { email, password } = req.body;
@@ -103,47 +120,35 @@ export async function login(req, res) {
             return res.status(400).json({ error: "Email and password required" });
 
         const user = await prisma.user.findUnique({ where: { email } });
-        if (!user) return res.status(400).json({ error: "User not found" });
+        if (!user) return res.status(400).json({ error: "Personnel not found." });
 
         if (!user.isVerified)
-            return res.status(400).json({ error: "Email not verified" });
-
-        if (!user.password)
-            return res.status(400).json({ error: "Use Google login for this account" });
+            return res.status(400).json({ error: "Account verification pending." });
 
         const ok = await bcrypt.compare(password, user.password);
-        if (!ok) return res.status(400).json({ error: "Wrong password" });
-
-        if (!process.env.JWT_SECRET) {
-            throw new Error("JWT_SECRET not set");
-        }
+        if (!ok) return res.status(400).json({ error: "Access Denied: Invalid Password." });
 
         const token = jwt.sign({ id: user.id, email: user.email },
             process.env.JWT_SECRET, { expiresIn: "7d" }
         );
 
-        res.json({ token });
+        res.json({ token, user: { id: user.id, name: user.name } });
     } catch (err) {
-        console.error("LOGIN ERROR:", err);
-        res.status(500).json({ error: "Login failed" });
+        console.error("LOGIN_ERROR:", err);
+        res.status(500).json({ error: "Authentication failed." });
     }
 }
 
-// =======================
-// GOOGLE LOGIN
-// =======================
+// ==========================================
+// 🌍 GOOGLE LOGIN (FEDERATED SYNC)
+// ==========================================
 export async function googleLogin(req, res) {
     try {
         const { token } = req.body;
-        if (!token) return res.status(400).json({ error: "Token required" });
+        if (!token) return res.status(400).json({ error: "Google token required." });
 
         const decoded = await admin.auth().verifyIdToken(token);
-
         const { uid, email, picture, name } = decoded;
-
-        if (!email) {
-            return res.status(400).json({ error: "Google account has no email" });
-        }
 
         let user = await prisma.user.findUnique({ where: { email } });
 
@@ -151,11 +156,10 @@ export async function googleLogin(req, res) {
             user = await prisma.user.create({
                 data: {
                     email,
-                    name: name || email.split("@")[0], // ✅ THIS MUST BE HERE
+                    name: name || email.split("@")[0],
                     password: null,
                     isVerified: true,
-                    googleId: uid,
-                    avatar: picture || null,
+                    photoUrl: picture || null,
                 },
             });
         }
@@ -164,9 +168,9 @@ export async function googleLogin(req, res) {
             process.env.JWT_SECRET, { expiresIn: "7d" }
         );
 
-        res.json({ token: appToken });
+        res.json({ token: appToken, user: { id: user.id, name: user.name } });
     } catch (err) {
-        console.error("GOOGLE LOGIN ERROR:", err);
-        res.status(401).json({ error: "Invalid Google token" });
+        console.error("GOOGLE_LOGIN_ERROR:", err);
+        res.status(401).json({ error: "External signal validation failed." });
     }
 }

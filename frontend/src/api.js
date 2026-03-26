@@ -1,5 +1,9 @@
 const API_URL = "http://localhost:5000/api";
 
+/**
+ * 🛰️ HEADER GENERATOR
+ * Handles standard JSON transmissions and Multipart (File) uploads.
+ */
 const getHeaders = (isMultipart = false) => {
     const token = localStorage.getItem("token");
     const headers = {};
@@ -8,7 +12,10 @@ const getHeaders = (isMultipart = false) => {
     return headers;
 };
 
-// --- 🔐 AUTHENTICATION ---
+// ==========================================
+// 🔐 AUTHENTICATION (IDENTITY VERIFICATION)
+// ==========================================
+
 export const login = (email, password) =>
     fetch(`${API_URL}/auth/login`, {
         method: "POST",
@@ -23,14 +30,17 @@ export const register = (email, password) =>
         body: JSON.stringify({ email, password })
     }).then(res => res.json());
 
-export const verifyOtp = (email, code, password) =>
+export const verifyOtp = (email, code) =>
     fetch(`${API_URL}/auth/verify-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, code, password })
+        body: JSON.stringify({ email, code })
     }).then(res => res.json());
 
-// --- ✈️ RADAR & LISTINGS ---
+// ==========================================
+// ✈️ RADAR & LISTINGS (FLIGHT OPERATIONS)
+// ==========================================
+
 export const fetchListings = () =>
     fetch(`${API_URL}/listings`, { headers: getHeaders() }).then(res => res.json());
 
@@ -40,7 +50,10 @@ export const getListingById = (id) =>
         return res.json();
     });
 
-// --- 👤 PERSONNEL & PROFILE ---
+// ==========================================
+// 👤 PERSONNEL & PROFILE (BIOMETRICS)
+// ==========================================
+
 export const getProfile = () =>
     fetch(`${API_URL}/users/me`, { headers: getHeaders() }).then(res => {
         if (!res.ok) throw new Error("UNAUTHORIZED");
@@ -61,15 +74,55 @@ export const uploadPhoto = (formData) =>
         body: formData
     }).then(res => res.json());
 
-// --- 💬 COMMS ---
-export const getChatHistory = (listingId) =>
-    fetch(`${API_URL}/chat/${listingId}`, { headers: getHeaders() }).then(res => {
+export const searchPersonnel = (query) =>
+    fetch(`${API_URL}/users/search?query=${query}`, {
+        headers: getHeaders()
+    }).then(res => res.json());
+
+// ==========================================
+// 💬 COMMS TACTICAL SUITE (UPGRADED)
+// ==========================================
+
+// 📥 SCAN_INBOX: Get all active personnel frequencies
+export const getInbox = () =>
+    fetch(`${API_URL}/chat/inbox`, { headers: getHeaders() }).then(res => res.json());
+
+// 📂 DECRYPT_HISTORY: Get 1:1 message history with specific personnel
+export const getChatHistory = (partnerId) =>
+    fetch(`${API_URL}/chat/history/${partnerId}`, { headers: getHeaders() }).then(res => res.json());
+
+// ⚡ INITIATE_TRANSMISSION: Save a new packet (Supports Text + Images)
+export const sendMessage = (packet) =>
+    fetch(`${API_URL}/chat/send`, {
+        method: "POST",
+        headers: getHeaders(),
+        body: JSON.stringify(packet)
+    }).then(res => res.json());
+
+// 🖼️ UPLOAD_CHAT_MEDIA: Upload images specifically for chat attachments
+export const uploadChatImage = (formData) =>
+    fetch(`${API_URL}/chat/upload`, {
+        method: "POST",
+        headers: getHeaders(true),
+        body: formData
+    }).then(res => res.json());
+
+// 🗑️ SCRUB_MESSAGE: Delete/Unsend a transmission from the database
+export const deleteMessage = (messageId) =>
+    fetch(`${API_URL}/chat/message/${messageId}`, {
+        method: "DELETE",
+        headers: getHeaders()
+    }).then(res => res.json());
+
+// 📑 SECTOR_LOGS: Get messages for a specific listing/flight sector
+export const getListingMessages = (listingId) =>
+    fetch(`${API_URL}/chat/listing/${listingId}`, { headers: getHeaders() }).then(res => {
         if (!res.ok) return [];
         return res.json();
     });
 
 // ==========================================
-// 📦 THE "BRIDGE" EXPORTS (Fixes SyntaxErrors)
+// 📦 THE "BRIDGE" EXPORTS
 // ==========================================
 const apiBundle = {
     login,
@@ -80,11 +133,14 @@ const apiBundle = {
     getProfile,
     updateProfile,
     uploadPhoto,
-    getChatHistory
+    searchPersonnel,
+    getInbox,
+    getChatHistory,
+    sendMessage,
+    uploadChatImage,
+    deleteMessage,
+    getListingMessages
 };
 
-// Satisfies 'import { api } from ...'
 export const api = apiBundle;
-
-// Satisfies 'import api from ...'
 export default apiBundle;

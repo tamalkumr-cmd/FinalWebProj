@@ -1,83 +1,143 @@
 import "dotenv/config";
-import { createServer } from "http"; // 👈 Import Node's HTTP module
-import { Server } from "socket.io"; // 👈 Import Socket.io
+import { createServer } from "http";
+import { Server } from "socket.io";
 import { PrismaClient } from "@prisma/client";
 import app from "./app.js";
 
 const PORT = process.env.PORT || 5000;
 const prisma = new PrismaClient();
-
-console.log("DB URL:", process.env.DATABASE_URL); // temp debug
-
-// 💥 1. WRAP EXPRESS WITH HTTP SERVER
 const httpServer = createServer(app);
 
-// 💥 2. INITIALIZE SOCKET.IO
+// 📡 TRACKING SYSTEM: Map to store active personnel (UserId -> SocketId)
+const onlinePersonnel = new Map();
+
 const io = new Server(httpServer, {
     cors: {
-        origin: "http://localhost:5173", // Must match your React port exactly
+        origin: "http://localhost:5173",
         methods: ["GET", "POST"],
         credentials: true
     }
 });
 
-// 💥 3. REAL-TIME CHAT LOGIC
 io.on("connection", (socket) => {
-    console.log("⚡ User connected to chat socket:", socket.id);
+    console.log("⚡ [SIGNAL_LOCKED]: New connection established ->", socket.id);
 
-    // Join a specific Gig's room
-    socket.on("join_chat", (listingId) => {
-        socket.join(listingId);
+    // 📟 JOIN PERSONAL FREQUENCY & BROADCAST STATUS
+    socket.on("join_personal_frequency", (userId) => {
+        if (userId) {
+            const uid = String(userId);
+            socket.join(uid);
+
+            // Register as Online
+            onlinePersonnel.set(uid, socket.id);
+            console.log(`👤 [PERSONNEL]: User ${uid} is ONLINE.`);
+
+            // Notify everyone that this pilot is now active
+            io.emit("user_status_change", { userId: uid, status: "online" });
+        }
     });
 
-    // Handle incoming messages
-
+    // 📩 MESSAGE TRANSMISSION
     socket.on("send_message", async(data) => {
-        const { listingId, text, senderId } = data;
+        const { text, senderId, receiverId, listingId, imageUrl } = data;
 
-        // 💥 NEW: Safety check to prevent server crashes!
-        if (!senderId) {
-            console.error("❌ Socket Error: Missing senderId from frontend!");
-            return; // Stop here, don't crash Prisma
-        }
+        if (!senderId || (!text && !imageUrl) || (!receiverId && !listingId)) return;
 
         try {
             const savedMsg = await prisma.message.create({
-                data: { text, listingId, senderId },
-                include: { sender: { select: { name: true } } }
+                data: {
+                    text: text || "",
+                    imageUrl: imageUrl || null,
+                    senderId,
+                    receiverId: receiverId || null,
+                    listingId: listingId || null
+                },
+                include: {
+                    sender: { select: { name: true, photoUrl: true, designation: true } }
+                }
             });
-            io.to(listingId).emit("receive_message", savedMsg);
+
+            // 🛡️ ECHO CANCELLATION ROUTING
+            if (receiverId) {
+                socket.to(String(receiverId)).emit("receive_message", savedMsg);
+            }
+            if (listingId) {
+                socket.to(String(listingId)).emit("receive_message", savedMsg);
+            }
+
+            console.log(`📨 [COMMS]: Packet routed from ${senderId}`);
         } catch (err) {
-            console.error("Socket save msg error:", err);
+            console.error("❌ [DB_WRITE_FAILURE]:", err.message);
         }
     });
 
-
-    // Handle Typing Indicator
-    socket.on("typing", (data) => {
-        socket.to(data.listingId).emit("display_typing", data);
-    });
-
-    // Handle "Seen" Status updates
-    socket.on("mark_seen", async(data) => {
+    // 🗑️ MESSAGE SCRUBBING (UNSEND)
+    socket.on("delete_message", async(data) => {
+        const { messageId, receiverId } = data;
         try {
-            const { messageId, listingId } = data;
-            await prisma.message.update({
-                where: { id: messageId },
-                data: { isSeen: true }
-            });
-            io.to(listingId).emit("message_updated");
+            await prisma.message.delete({ where: { id: messageId } });
+            // Alert receiver to remove message from UI
+            socket.to(String(receiverId)).emit("message_scrubbed", messageId);
         } catch (err) {
-            console.error("Socket mark seen error:", err);
+            console.error("❌ [SCRUB_FAILURE]:", err.message);
         }
     });
 
+    // ⌨️ TYPING TELEMETRY
+    socket.on("typing_start", (data) => {
+        const target = data.receiverId || data.listingId;
+        socket.to(String(target)).emit("display_typing", {
+            senderId: data.senderId,
+            typing: true
+        });
+    });
+
+    socket.on("typing_stop", (data) => {
+        const target = data.receiverId || data.listingId;
+        socket.to(String(target)).emit("display_typing", {
+            senderId: data.senderId,
+            typing: false
+        });
+    });
+
+    // 📞 VOICE/VIDEO CALLS
+    socket.on("call_user", (data) => {
+        io.to(String(data.to)).emit("incoming_call", {
+            from: data.from,
+            signal: data.signalData,
+            type: data.type,
+            name: data.name
+        });
+    });
+
+    socket.on("answer_call", (data) => {
+        io.to(String(data.to)).emit("call_accepted", data.signal);
+    });
+
+    // 🛑 SIGNAL DISCONNECT
     socket.on("disconnect", () => {
-        console.log("🔴 User disconnected:", socket.id);
+        let disconnectedUid = null;
+        for (let [uid, sid] of onlinePersonnel.entries()) {
+            if (sid === socket.id) {
+                disconnectedUid = uid;
+                onlinePersonnel.delete(uid);
+                break;
+            }
+        }
+        if (disconnectedUid) {
+            console.log(`👤 [PERSONNEL]: User ${disconnectedUid} is OFFLINE.`);
+            io.emit("user_status_change", { userId: disconnectedUid, status: "offline" });
+        }
     });
 });
 
-// 💥 4. LISTEN USING httpServer (NOT app.listen)
 httpServer.listen(PORT, () => {
-    console.log(`Server running on port ${PORT} with WebSockets 🚀`);
+    console.log(`
+    ========================================
+    🚀 Sky_Link.os TACTICAL CORE ONLINE
+    📡 PORT: ${PORT}
+    🟢 STATUS TRACKING: ACTIVE
+    ⌨️ TYPING ENGINE: ACTIVE
+    ========================================
+    `);
 });

@@ -4,8 +4,9 @@ import { register, verifyOtp, login, googleLogin } from "../controllers/auth.con
 const router = express.Router();
 
 router.post("/register", register);
-router.post("/verify", verifyOtp);
+// 🛰️ CHANGED: From "/verify" to "/verify-otp" to match Frontend
+router.post("/verify-otp", verifyOtp);
 router.post("/login", login);
-router.post("/google", googleLogin); // ✅ IMPORTANT: only "/google"
+router.post("/google", googleLogin);
 
 export default router;
