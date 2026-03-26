@@ -6,7 +6,7 @@ import {
   LayoutDashboard, Map as MapIcon, LogOut, Navigation, 
   Database, RefreshCcw, ChevronRight, Plus, FileText, 
   ShieldCheck, MessageSquare, Fingerprint, Activity, 
-  Zap, Search, ArrowUpRight
+  Zap, Search, ArrowUpRight, Radar, Terminal, Globe, ArrowRight
 } from "lucide-react";
 
 // --- 🛰️ MODULE IMPORTS ---
@@ -22,8 +22,6 @@ export default function Dashboard() {
   const [profile, setProfile] = useState({});
   const [loading, setLoading] = useState(true);
   const [activeFlight, setActiveFlight] = useState(null);
-  
-  // --- 🔍 FILTER STATES ---
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("departure");
 
@@ -42,13 +40,11 @@ export default function Dashboard() {
 
   useEffect(() => { loadData(); }, [loadData]);
 
-  // --- 🛰️ ACTION HANDLERS ---
   const handleManageOps = (flight) => {
     setActiveFlight(flight);
     setTab("ops");
   };
 
-  // --- ⚙️ FILTER LOGIC ---
   const filteredFlights = useMemo(() => {
     let result = flights.filter(f => 
       f.airline?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -65,109 +61,124 @@ export default function Dashboard() {
 
   if (loading) return <LoadingScreen />;
 
+  // 🍏 SAN FRANCISCO FONT STACK & GREY-BLUE THEME
+  const fontStack = "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif";
+
   return (
-    <div className="min-h-screen bg-[#020617] text-slate-300 font-mono flex overflow-hidden selection:bg-cyan-500 selection:text-black">
+    <div 
+      style={{ fontFamily: fontStack }}
+      className="min-h-screen bg-[#F0F2F5] text-slate-900 flex overflow-hidden selection:bg-indigo-500 selection:text-white"
+    >
+      {/* --- BACKGROUND ANIMATION --- */}
+      <div className="fixed inset-0 pointer-events-none opacity-40">
+        <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_50%,#CBD5E1_0%,transparent_100%)]" />
+      </div>
       
-      {/* 🛠️ SIDEBAR NAVIGATION */}
-      <aside className="w-20 hover:w-64 transition-all duration-500 group border-r border-white/5 bg-[#020617] flex flex-col p-4 z-50 shadow-2xl">
-        <div className="flex items-center gap-4 mb-10 px-2">
-          <div className="min-w-[40px] h-10 bg-cyan-500 rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(6,182,212,0.4)]">
-            <Navigation className="text-black" size={20} />
-          </div>
-          <span className="font-black text-xl tracking-tighter text-white opacity-0 group-hover:opacity-100 transition-opacity uppercase italic">Sky_Link.os</span>
+      {/* 🛠️ SIDEBAR: TITANIUM BLUE STRIP */}
+      <aside className="w-24 hover:w-72 transition-all duration-500 group border-r border-slate-300 bg-[#FFFFFF]/90 backdrop-blur-2xl flex flex-col p-5 z-50 shadow-2xl">
+        <div className="flex items-center gap-5 mb-16 px-2">
+          <motion.div 
+            animate={{ rotate: 360 }}
+            transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+            className="min-w-[48px] h-12 rounded-2xl flex items-center justify-center bg-indigo-600 shadow-lg shadow-indigo-200"
+          >
+            <Radar className="text-white" size={24} />
+          </motion.div>
+          <span className="font-bold text-2xl tracking-tight text-slate-900 opacity-0 group-hover:opacity-100 transition-all duration-500 uppercase italic whitespace-nowrap">Sky_Link.os</span>
         </div>
 
-        <nav className="flex-1 space-y-2">
-          <NavItem icon={<LayoutDashboard size={18}/>} label="OPERATIONS" active={tab === "flights"} onClick={() => setTab("flights")} />
-          <NavItem icon={<Database size={18}/>} label="INVENTORY" active={tab === "inventory"} onClick={() => setTab("inventory")} />
-          <NavItem icon={<MapIcon size={18}/>} label="LIVE_RADAR" active={tab === "map"} onClick={() => setTab("map")} />
-          <NavItem icon={<MessageSquare size={18}/>} label="COMMS_LINK" active={tab === "chat"} onClick={() => setTab("chat")} />
-          <NavItem icon={<Fingerprint size={18}/>} label="PERSONNEL" active={tab === "profile"} onClick={() => setTab("profile")} />
+        <nav className="flex-1 space-y-4">
+          <NavItem icon={<LayoutDashboard size={24}/>} label="OPERATIONS" active={tab === "flights"} onClick={() => setTab("flights")} />
+          <NavItem icon={<Database size={24}/>} label="MANIFEST" active={tab === "inventory"} onClick={() => setTab("inventory")} />
+          <NavItem icon={<Globe size={24}/>} label="AIRSPACE" active={tab === "map"} onClick={() => setTab("map")} />
+          <NavItem icon={<MessageSquare size={24}/>} label="COMMS_LINK" active={tab === "chat"} onClick={() => setTab("chat")} />
+          <NavItem icon={<Fingerprint size={24}/>} label="USER_ID" active={tab === "profile"} onClick={() => setTab("profile")} />
         </nav>
 
-        <button onClick={() => { localStorage.clear(); navigate("/login"); }} className="p-4 text-slate-600 hover:text-red-500 flex items-center gap-4 transition-colors border-t border-white/5 group/out">
-          <LogOut size={18} />
-          <span className="font-black text-[10px] opacity-0 group-hover:opacity-100 uppercase tracking-widest">Disconnect</span>
+        <button onClick={() => { localStorage.clear(); navigate("/login"); }} className="p-5 text-slate-400 hover:text-red-500 flex items-center gap-5 transition-all border-t border-slate-200 group/out">
+          <LogOut size={24} />
+          <span className="font-bold text-sm opacity-0 group-hover:opacity-100 uppercase tracking-widest">Terminate</span>
         </button>
       </aside>
 
-      {/* 🖥️ MAIN INTERFACE */}
+      {/* 🖥️ MAIN INTERFACE: BLUE-GREY COMMAND DECK */}
       <main className="flex-1 flex flex-col relative overflow-hidden">
-        <header className="h-20 border-b border-white/5 flex items-center justify-between px-8 bg-black/40 backdrop-blur-md z-40">
-          <div>
-            <h2 className="text-[9px] font-black text-cyan-500 uppercase tracking-[0.4em]">Sector_Overview</h2>
-            <p className="text-xl font-black text-white italic tracking-tighter uppercase">Command_Terminal <span className="text-slate-600 font-normal lowercase">// {tab}</span></p>
+        <header className="h-28 border-b border-slate-300 flex items-center justify-between px-12 bg-white/70 backdrop-blur-xl z-40">
+          <div className="space-y-1">
+            <h2 className="text-xs font-bold text-indigo-500 uppercase tracking-[0.4em]">Command_Authority // Sector_Blue</h2>
+            <p className="text-4xl font-extrabold text-slate-900 italic tracking-tight uppercase leading-none">
+              Control_Monitor <span className="text-slate-400 font-medium lowercase">// {tab}</span>
+            </p>
           </div>
 
-          <div className="flex items-center gap-6">
-             <div className="hidden lg:flex gap-6 border-r border-white/10 pr-8">
-                <StatusNode label="SIGNAL" value="98%" color="text-emerald-500" icon={<Activity size={10}/>} />
-                <StatusNode label="FLEET" value={flights.length} color="text-cyan-400" icon={<Zap size={10}/>} />
+          <div className="flex items-center gap-10">
+             <div className="hidden lg:flex gap-10 border-r border-slate-200 pr-10">
+                <StatusNode label="SIGNAL" value="OPTIMAL" color="text-emerald-600" icon={<Zap size={14} className="fill-emerald-600" />} />
+                <StatusNode label="ASSETS" value={flights.length} color="text-indigo-600" icon={<Navigation size={14}/>} />
              </div>
-             <div onClick={() => setTab("profile")} className="w-10 h-10 rounded-full border border-white/10 overflow-hidden cursor-pointer group shadow-[0_0_10px_rgba(6,182,212,0.2)]">
-                <img src={profile.photoUrl || "https://ui-avatars.com/api/?name=User"} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all" alt="Avatar" />
-             </div>
+             <motion.div 
+               whileHover={{ scale: 1.1, rotate: 5 }}
+               onClick={() => setTab("profile")} 
+               className="w-14 h-14 rounded-full border-4 border-white shadow-2xl cursor-pointer overflow-hidden bg-slate-300"
+             >
+                <img src={profile.photoUrl || "https://ui-avatars.com/api/?name=User"} className="w-full h-full object-cover" alt="Bio" />
+             </motion.div>
           </div>
         </header>
 
-        <div className="flex-1 p-8 overflow-y-auto custom-scrollbar relative">
+        <div className="flex-1 p-12 overflow-y-auto relative bg-[#F0F4F8]">
           <AnimatePresence mode="wait">
             <motion.div 
               key={tab} 
-              initial={{ opacity: 0, y: 10 }} 
-              animate={{ opacity: 1, y: 0 }} 
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2 }}
+              initial={{ opacity: 0, scale: 0.98 }} 
+              animate={{ opacity: 1, scale: 1 }} 
+              exit={{ opacity: 0, scale: 1.02 }}
+              transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
             >
-              {/* --- 📦 TAB: INVENTORY (ROW-WISE LOG) --- */}
+              {/* --- 📦 TAB: INVENTORY --- */}
               {tab === "inventory" && (
-                <div className="space-y-6">
-                  <div className="flex flex-col md:flex-row gap-4 justify-between items-center bg-white/[0.02] p-6 rounded-[2rem] border border-white/5 backdrop-blur-md">
-                    <div className="relative w-full md:w-96">
-                      <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" />
+                <div className="space-y-12">
+                  <div className="flex flex-col md:flex-row gap-8 justify-between items-center bg-white/80 border border-white p-10 rounded-[2.5rem] shadow-xl shadow-slate-300/20 backdrop-blur-md">
+                    <div className="relative w-full md:w-[600px]">
+                      <Search size={20} className="absolute left-8 top-1/2 -translate-y-1/2 text-slate-400" />
                       <input 
                         type="text" 
-                        placeholder="FILTER_BY_CALLSIGN_OR_DESTINATION..." 
-                        className="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-[10px] font-black uppercase tracking-widest focus:border-cyan-500 outline-none transition-all"
+                        placeholder="Search Fleet Registry..." 
+                        className="w-full bg-[#E2E8F0]/50 border border-slate-300 rounded-2xl py-5 pl-16 pr-8 text-lg font-medium focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none transition-all placeholder:text-slate-400"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                       />
                     </div>
-                    <div className="flex gap-4 w-full md:w-auto">
+                    <div className="flex gap-6 w-full md:w-auto">
                       <select 
-                        className="flex-1 md:w-48 bg-black/40 border border-white/10 rounded-xl p-3 text-[10px] font-black uppercase outline-none focus:border-cyan-500 text-slate-400"
+                        className="flex-1 md:w-64 bg-white border border-slate-300 rounded-2xl p-5 text-sm font-bold uppercase outline-none focus:border-indigo-500 text-slate-600 appearance-none cursor-pointer shadow-sm"
                         value={sortBy}
                         onChange={(e) => setSortBy(e.target.value)}
                       >
-                        <option value="departure">SORT: DEPARTURE</option>
-                        <option value="price">SORT: PRICE_VALUE</option>
+                        <option value="departure">Filter: Chronology</option>
+                        <option value="price">Filter: Asset Value</option>
                       </select>
-                      <button onClick={() => navigate("/create-listing")} className="bg-cyan-500 text-black px-6 py-3 rounded-xl font-black text-[10px] uppercase flex items-center gap-2 hover:shadow-[0_0_20px_cyan] transition-all">
-                        <Plus size={14} /> New_Asset
+                      <button onClick={() => navigate("/create-listing")} className="bg-slate-900 text-white px-10 py-5 rounded-2xl font-bold text-sm uppercase flex items-center gap-4 hover:bg-indigo-600 transition-all shadow-lg active:scale-95">
+                        <Plus size={20} /> Enroll Asset
                       </button>
                     </div>
                   </div>
 
-                  <div className="bg-white/[0.02] border border-white/5 rounded-[2.5rem] overflow-hidden backdrop-blur-md">
+                  <div className="bg-white border border-slate-200 rounded-[3rem] overflow-hidden shadow-2xl">
                     <table className="w-full text-left border-collapse">
                       <thead>
-                        <tr className="border-b border-white/5 bg-white/5">
-                          <th className="p-6 text-[9px] font-black uppercase tracking-widest text-slate-500">Vessel_Identity</th>
-                          <th className="p-6 text-[9px] font-black uppercase tracking-widest text-slate-500">Route_Vector</th>
-                          <th className="p-6 text-[9px] font-black uppercase tracking-widest text-slate-500">Status_Telemetry</th>
-                          <th className="p-6 text-[9px] font-black uppercase tracking-widest text-slate-500 text-right">Control</th>
+                        <tr className="border-b border-slate-200 bg-slate-50/80">
+                          <th className="p-10 text-xs font-extrabold uppercase tracking-[0.2em] text-slate-400">Vessel Identity</th>
+                          <th className="p-10 text-xs font-extrabold uppercase tracking-[0.2em] text-slate-400">Vector Path</th>
+                          <th className="p-10 text-xs font-extrabold uppercase tracking-[0.2em] text-slate-400">Sync Status</th>
+                          <th className="p-10 text-xs font-extrabold uppercase tracking-[0.2em] text-slate-400 text-right">Action</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-white/5">
-                        {filteredFlights.length > 0 ? filteredFlights.map(f => (
-                          <InventoryRow 
-                            key={f.id} 
-                            f={f} 
-                            onView={() => navigate(`/product/${f.id}`)} 
-                            onManage={() => handleManageOps(f)}
-                          />
+                      <tbody className="divide-y divide-slate-100">
+                        {filteredFlights.length > 0 ? filteredFlights.map((f, i) => (
+                          <InventoryRow key={f.id} f={f} index={i} onView={() => navigate(`/product/${f.id}`)} onManage={() => handleManageOps(f)} />
                         )) : (
-                          <tr><td colSpan="4" className="p-20 text-center text-slate-600 font-black uppercase text-xs tracking-[0.5em]">No_Vessels_Detected</td></tr>
+                          <tr><td colSpan="4" className="p-40 text-center text-slate-300 font-bold text-2xl tracking-tighter">No active vessels detected</td></tr>
                         )}
                       </tbody>
                     </table>
@@ -175,21 +186,24 @@ export default function Dashboard() {
                 </div>
               )}
 
-              {/* --- 🚀 TAB: OPERATIONS (CARD VIEW) --- */}
+              {/* --- 🚀 TAB: TELEMETRY --- */}
               {tab === "flights" && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <motion.div 
+                  initial="hidden" animate="visible"
+                  variants={{ visible: { transition: { staggerChildren: 0.1 } } }}
+                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10"
+                >
                   {filteredFlights.map(f => (
                     <FleetCard key={f.id} f={f} onClick={() => navigate(`/product/${f.id}`)} onManage={() => handleManageOps(f)} />
                   ))}
-                </div>
+                </motion.div>
               )}
 
-              {/* --- 🗺️ OTHER TABS --- */}
-              {tab === "map" && <div className="h-[75vh] rounded-[3rem] overflow-hidden border border-white/5"><FlightMap flights={flights} /></div>}
+              {/* --- MODULES --- */}
+              {tab === "map" && <div className="h-[75vh] rounded-[3rem] overflow-hidden border-8 border-white shadow-2xl"><FlightMap flights={flights} /></div>}
               {tab === "chat" && <ChatPage currentUser={profile} />}
               {tab === "profile" && <Profile />}
               {tab === "ops" && <FlightOperations selectedFlight={activeFlight} />}
-
             </motion.div>
           </AnimatePresence>
         </div>
@@ -200,108 +214,119 @@ export default function Dashboard() {
 
 // --- 🛠️ SUB-COMPONENTS ---
 
-function InventoryRow({ f, onView, onManage }) {
+function InventoryRow({ f, onView, onManage, index }) {
   const isAirborne = new Date(f.departure) < new Date() && new Date(f.arrival) > new Date();
 
   return (
-    <tr className="hover:bg-white/[0.03] transition-colors group">
-      <td className="p-6">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-slate-900 border border-white/10 overflow-hidden grayscale group-hover:grayscale-0 transition-all">
-            <img src={f.images?.[0]?.url || "/placeholder.jpg"} className="w-full h-full object-cover" alt="ship" />
+    <motion.tr 
+      initial={{ opacity: 0, x: -20 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay: index * 0.05 }}
+      className="hover:bg-indigo-50/50 transition-all group"
+    >
+      <td className="p-10">
+        <div className="flex items-center gap-8">
+          <div className="w-20 h-20 rounded-3xl bg-white border border-slate-200 overflow-hidden shadow-sm group-hover:shadow-indigo-200 transition-all duration-500">
+            <img src={f.images?.[0]?.url || "/placeholder.jpg"} className="w-full h-full object-cover grayscale opacity-80 group-hover:opacity-100 group-hover:grayscale-0 transition-all duration-700" alt="ship" />
           </div>
           <div>
-            <p className="text-sm font-black text-white italic uppercase">{f.airline}</p>
-            <p className="text-[8px] text-slate-500 font-bold tracking-tighter uppercase">{f.aircraftModel || "CLASS_UNKNOWN"}</p>
+            <p className="text-2xl font-bold text-slate-900 tracking-tight">{f.airline}</p>
+            <p className="text-xs text-indigo-500 font-extrabold uppercase mt-1 tracking-widest">{f.aircraftModel || "SIG_GEN_4"}</p>
           </div>
         </div>
       </td>
-      <td className="p-6">
-        <div className="flex items-center gap-3 text-[10px] font-black">
-          <span className="text-white">{f.source}</span>
-          <ChevronRight size={12} className="text-cyan-500" />
-          <span className="text-white">{f.destination}</span>
+      <td className="p-10">
+        <div className="flex items-center gap-6 text-xl font-bold text-slate-700">
+          <span>{f.source}</span>
+          <ArrowRight size={20} className="text-slate-300 group-hover:text-indigo-600 transition-colors" />
+          <span>{f.destination}</span>
         </div>
-        <p className="text-[7px] text-slate-600 mt-1 font-bold uppercase tracking-widest">
-            Departure: {new Date(f.departure).toLocaleDateString()}
+        <p className="text-xs text-slate-400 mt-2 font-bold uppercase">
+            ETD: {new Date(f.departure).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
         </p>
       </td>
-      <td className="p-6">
-        <div className="space-y-2">
-          <span className={`px-2 py-0.5 rounded-full text-[7px] font-black uppercase border ${
-            isAirborne ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" : "bg-cyan-500/10 text-cyan-500 border-cyan-500/20"
+      <td className="p-10">
+        <div className="space-y-4">
+          <span className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase border tracking-widest ${
+            isAirborne ? "bg-emerald-600 text-white border-emerald-600" : "bg-white text-slate-400 border-slate-200"
           }`}>
-            {isAirborne ? "● Airborne" : "○ Hangar_Ready"}
+            {isAirborne ? "In Transit" : "Ground"}
           </span>
-          <div className="space-y-1 w-28">
-            <div className="flex justify-between text-[7px] font-bold uppercase tracking-tighter">
-               <span className="text-slate-500">Fuel</span>
-               <span className="text-cyan-500">{f.fuelLoad || 100}%</span>
-            </div>
-            <div className="h-0.5 bg-white/5 rounded-full overflow-hidden">
-               <motion.div initial={{ width: 0 }} animate={{ width: `${f.fuelLoad || 100}%` }} className="h-full bg-cyan-500" />
+          <div className="space-y-2 w-40">
+            <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+               <motion.div initial={{ width: 0 }} animate={{ width: `${f.fuelLoad || 100}%` }} className="h-full bg-indigo-600" />
             </div>
           </div>
         </div>
       </td>
-      <td className="p-6 text-right">
-        <div className="flex justify-end gap-2">
-            <button onClick={onView} className="p-3 bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white rounded-xl transition-all">
-                <ArrowUpRight size={16} />
+      <td className="p-10 text-right">
+        <div className="flex justify-end gap-5 opacity-0 group-hover:opacity-100 transition-all transform translate-x-4 group-hover:translate-x-0">
+            <button onClick={onView} className="p-5 bg-white hover:bg-indigo-600 hover:text-white rounded-2xl shadow-xl border border-slate-100 transition-all">
+                <ArrowUpRight size={24} />
             </button>
-            <button onClick={onManage} className="p-3 bg-cyan-500/10 hover:bg-cyan-500 hover:text-black text-cyan-500 rounded-xl transition-all border border-cyan-500/20">
-                <ShieldCheck size={16} />
+            <button onClick={onManage} className="p-5 bg-white hover:bg-indigo-600 hover:text-white rounded-2xl shadow-xl border border-slate-100 transition-all">
+                <ShieldCheck size={24} />
             </button>
         </div>
       </td>
-    </tr>
+    </motion.tr>
   );
+}
+
+function FleetCard({ f, onClick, onManage }) {
+    return (
+      <motion.div 
+        variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
+        whileHover={{ y: -12 }}
+        className="bg-white border border-slate-200 p-8 rounded-[3rem] hover:shadow-2xl transition-all duration-500 group flex flex-col justify-between h-full relative overflow-hidden shadow-xl shadow-slate-300/10"
+      >
+        <div className="cursor-pointer" onClick={onClick}>
+            <div className="overflow-hidden rounded-[2rem] mb-8 aspect-video bg-slate-100">
+                <img src={f.images?.[0]?.url || "/placeholder.jpg"} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-1000" alt="vessel" />
+            </div>
+            <h4 className="text-3xl font-bold text-slate-900 tracking-tight leading-none mb-4">{f.airline}</h4>
+            <div className="flex justify-between mt-4 text-xs font-bold text-slate-400 uppercase tracking-widest">
+                <span>{f.source} → {f.destination}</span>
+                <span className="text-indigo-600 text-base">${f.price}</span>
+            </div>
+        </div>
+        <button onClick={onManage} className="mt-10 w-full bg-slate-900 hover:bg-indigo-600 text-white py-6 rounded-2xl text-sm font-bold uppercase tracking-widest transition-all shadow-lg">
+            Manage Registry
+        </button>
+      </motion.div>
+    );
 }
 
 function NavItem({ icon, label, active, onClick }) {
   return (
-    <button onClick={onClick} className={`w-full flex items-center gap-4 p-4 rounded-2xl transition-all ${active ? "bg-cyan-500 text-black shadow-[0_0_20px_rgba(6,182,212,0.3)]" : "text-slate-500 hover:text-white hover:bg-white/5"}`}>
+    <button onClick={onClick} className={`w-full flex items-center gap-6 p-5 rounded-2xl transition-all duration-500 ${active ? "bg-indigo-600 text-white shadow-2xl shadow-indigo-300 scale-105" : "text-slate-400 hover:text-slate-900 hover:bg-slate-100"}`}>
       {icon}
-      <span className="font-black text-[10px] tracking-widest uppercase opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">{label}</span>
+      <span className="font-bold text-base tracking-tight uppercase opacity-0 group-hover:opacity-100 transition-all duration-500 whitespace-nowrap">{label}</span>
     </button>
   );
 }
 
 function StatusNode({ label, value, color, icon }) {
   return (
-    <div className="flex flex-col">
-      <div className="flex items-center gap-1">
+    <div className="flex flex-col gap-1">
+      <div className="flex items-center gap-3">
         {icon}
-        <span className="text-[8px] text-slate-600 font-black uppercase">{label}</span>
+        <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">{label}</span>
       </div>
-      <span className={`font-black ${color}`}>{value}</span>
+      <span className={`font-black text-xl tracking-tighter ${color}`}>{value}</span>
     </div>
   );
 }
 
-function FleetCard({ f, onClick, onManage }) {
-    return (
-      <div className="bg-white/5 border border-white/5 p-6 rounded-[2.5rem] hover:bg-white/[0.08] transition-all group flex flex-col justify-between h-full">
-        <div className="cursor-pointer" onClick={onClick}>
-            <img src={f.images?.[0]?.url || "/placeholder.jpg"} className="w-full h-32 object-cover rounded-2xl mb-4 grayscale group-hover:grayscale-0 transition-all" alt="vessel" />
-            <h4 className="font-black text-white italic uppercase truncate">{f.airline}</h4>
-            <div className="flex justify-between mt-2 text-[10px] font-bold text-slate-500 uppercase">
-                <span>{f.source} → {f.destination}</span>
-                <span className="text-cyan-500">${f.price}</span>
-            </div>
-        </div>
-        <button onClick={onManage} className="mt-4 w-full bg-cyan-500/10 hover:bg-cyan-500 hover:text-black text-cyan-500 py-3 rounded-xl text-[9px] font-black uppercase transition-all flex items-center justify-center gap-2">
-            <ShieldCheck size={12} /> Alloc_Seats
-        </button>
-      </div>
-    );
-}
-
 function LoadingScreen() {
   return (
-    <div className="h-screen bg-[#020617] flex flex-col items-center justify-center">
-      <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }} className="w-12 h-12 border-2 border-cyan-500 border-t-transparent rounded-full mb-4" />
-      <p className="text-[10px] font-black tracking-[0.5em] text-cyan-500 uppercase animate-pulse">Syncing_Mainframe</p>
+    <div className="h-screen bg-[#F3F4F6] flex flex-col items-center justify-center">
+      <motion.div 
+        animate={{ rotate: 360, scale: [1, 1.1, 1] }} 
+        transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }} 
+        className="w-20 h-20 border-8 border-slate-200 border-t-indigo-600 rounded-full mb-10 shadow-2xl bg-white" 
+      />
+      <p className="text-base font-bold text-slate-900 uppercase tracking-[0.6em] animate-pulse">Syncing_Mainframe</p>
     </div>
   );
 }

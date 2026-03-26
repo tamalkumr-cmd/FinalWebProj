@@ -1,247 +1,220 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef } from "react";
+import { ReactLenis } from "@studio-freight/react-lenis";
+import { motion, useScroll, useTransform, useSpring, useInView } from "framer-motion";
 import { Link } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
 import { 
-  Plane, Globe, ShieldCheck, Zap, ArrowRight, 
-  Navigation, Activity, Cpu, ChevronDown, 
-  Radar, Terminal, Radio
+  Plane, ArrowRight, Activity, Cpu, Radio, 
+  ShieldCheck, Target, Globe, Zap, ChevronDown, Terminal 
 } from "lucide-react";
 
 export default function Home() {
+  const containerRef = useRef(null);
+  
+  // 1. 🚀 PHYSICS-BASED SMOOTHING
+  const { scrollYProgress } = useScroll();
+  const smoothProgress = useSpring(scrollYProgress, { 
+    stiffness: 40, 
+    damping: 20, 
+    restDelta: 0.001 
+  });
+
+  // Background Reactive Logic
+  const bgScale = useTransform(smoothProgress, [0, 1], [1, 1.4]);
+  const ghostTextX = useTransform(smoothProgress, [0, 1], ["0%", "-50%"]);
+
   return (
-    <div className="min-h-screen bg-[#050505] text-cyan-400 font-mono selection:bg-cyan-500 selection:text-black overflow-x-hidden">
-      
-      {/* --- SCANLINE OVERLAY --- */}
-      <div className="fixed inset-0 z-50 pointer-events-none opacity-[0.03] bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,118,0.06))] bg-[length:100%_2px,3px_100%]" />
-
-      {/* --- NAV --- */}
-      <nav className="fixed top-0 w-full z-[60] bg-black/80 backdrop-blur-md border-b border-cyan-500/30">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-          <Link to="/" className="text-2xl font-black tracking-tighter italic flex items-center gap-2 group">
-            <Plane className="group-hover:rotate-45 transition-transform text-yellow-400" />
-            <span className="text-white">NORS</span> <span className="text-cyan-500">AVIATION</span>
-          </Link>
-          <div className="flex items-center gap-6">
-            <Link to="/login" className="hidden md:block font-bold text-xs tracking-widest hover:text-white transition-colors">
-              [ ACCESS_PORT ]
-            </Link>
-            <Link
-              to="/register"
-              className="font-bold text-xs tracking-widest bg-cyan-500 text-black px-5 py-2.5 rounded-sm hover:bg-yellow-400 transition-all clip-path-cyber"
-              style={{ clipPath: 'polygon(10% 0, 100% 0, 100% 70%, 90% 100%, 0 100%, 0% 30%)' }}
-            >
-              INITIALIZE_SYSTEM
-            </Link>
-          </div>
-        </div>
-      </nav>
-
-      {/* --- HERO SECTION --- */}
-      <section className="relative pt-48 pb-20 px-6 max-w-7xl mx-auto text-center">
-        {/* Decorative Radar Circles */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] border border-cyan-500/10 rounded-full animate-pulse -z-10" />
+    <ReactLenis root options={{ lerp: 0.05, duration: 1.5, smoothWheel: true }}>
+      <div ref={containerRef} className="bg-black text-white selection:bg-white selection:text-black">
         
-        <div className="inline-block mb-6 px-4 py-1 bg-yellow-400/10 border border-yellow-400 text-yellow-400 text-[10px] font-black uppercase tracking-[0.3em]">
-          System Status: Optimal // Core v4.0.2
+        {/* --- GLOBAL HUD: PROGRESS LINE --- */}
+        <div className="fixed top-0 left-0 w-full h-[1px] bg-zinc-900 z-[100]">
+          <motion.div 
+            className="h-full bg-white origin-left" 
+            style={{ scaleX: smoothProgress }} 
+          />
         </div>
 
-        <h1 className="text-5xl md:text-8xl font-black mb-8 leading-[0.9] tracking-tighter text-white">
-          COMMAND THE SKY.<br />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-600">
-            AUTOMATE LOGISTICS.
-          </span>
-        </h1>
-
-        <p className="text-lg md:text-xl font-medium text-cyan-700 max-w-2xl mx-auto mb-10">
-          Next-generation Aviation Management for the digital age. 
-          Real-time telemetry, automated ATC coordination, and neural-link fleet tracking.
-        </p>
-
-        <div className="flex flex-col sm:flex-row justify-center gap-6 mb-20">
-          <Link
-            to="/register"
-            className="px-8 py-4 bg-cyan-500 text-black font-black text-lg shadow-[4px_4px_0px_0px_#fbbf24] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all flex items-center justify-center gap-2 clip-path-cyber"
-            style={{ clipPath: 'polygon(0 0, 100% 0, 100% 70%, 90% 100%, 0 100%)' }}
+        {/* --- DYNAMIC BACKGROUND: GHOST TEXT & GRID --- */}
+        <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+          <motion.div 
+            style={{ x: ghostTextX }}
+            className="absolute top-1/4 whitespace-nowrap text-[30vw] font-black text-white/[0.02] italic select-none"
           >
-            Launch Terminal <Navigation className="w-5 h-5" />
-          </Link>
-          <button className="px-8 py-4 bg-transparent text-cyan-400 border border-cyan-500 font-black text-lg hover:bg-cyan-500/10 transition-all">
-            Technical Manual
-          </button>
+            PRECISION_SYSTEMS_AEROSPACE_COMMAND_LINK
+          </motion.div>
+          <motion.div  
+            style={{ scale: bgScale }}
+            className="absolute inset-0 opacity-[0.03] bg-[linear-gradient(to_right,#ffffff_1px,transparent_1px),linear-gradient(to_bottom,#ffffff_1px,transparent_1px)] bg-[size:100px_100px]"
+          />
         </div>
 
-        {/* Fleet Mockup Visual */}
-        <div className="relative mx-auto max-w-5xl">
-          <div className="absolute -inset-1 bg-gradient-to-r from-cyan-500 to-yellow-500 rounded-lg blur opacity-20 animate-pulse"></div>
-          <div className="relative bg-black border border-cyan-500/50 rounded-lg p-4 md:p-6 grid md:grid-cols-3 gap-6 text-left">
-              <div className="bg-cyan-950/20 p-4 border border-cyan-500/20 flex flex-col gap-2">
-                 <div className="flex justify-between items-center text-[10px] text-cyan-600 font-bold">
-                    <span>RADAR_SCAN</span>
-                    <Radar size={14} className="animate-spin" />
-                 </div>
-                 <div className="h-32 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] flex items-center justify-center border border-cyan-500/10">
-                    <Plane className="text-cyan-400/50 rotate-45" size={48} />
-                 </div>
+        {/* --- HERO: THE MONOLITH --- */}
+        <section className="h-[120vh] flex flex-col items-center justify-center relative z-10 px-6">
+          <div className="flex flex-col items-center text-center">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <div className="inline-flex items-center gap-3 px-4 py-1 border border-white/10 rounded-full mb-8 bg-white/5">
+                <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-400">Signal_Locked // Core_v4</span>
               </div>
-              <div className="bg-cyan-950/20 p-4 border border-cyan-500/20">
-                 <div className="text-[10px] text-yellow-400 mb-4 tracking-widest font-bold uppercase">Active_Fleet_Status</div>
-                 <div className="space-y-3">
-                    {[1, 2, 3].map(i => (
-                      <div key={i} className="flex justify-between items-center text-[12px] border-b border-cyan-500/10 pb-2">
-                        <span className="text-white">FLIGHT_NORS_{700 + i}</span>
-                        <span className="text-emerald-400">ON_PATH</span>
-                      </div>
-                    ))}
-                 </div>
-              </div>
-              <div className="bg-cyan-950/20 p-4 border border-cyan-500/20 flex flex-col justify-between">
-                 <div>
-                    <div className="text-3xl font-black text-white">12,840</div>
-                    <div className="text-[10px] font-bold uppercase text-cyan-600">Total Flight Hours</div>
-                 </div>
-                 <div className="h-10 bg-cyan-500 text-black font-black flex items-center justify-center text-xs">
-                    SYSTEM_REPORT.PDF
-                 </div>
-              </div>
-          </div>
-        </div>
-      </section>
+              <h1 className="text-[14vw] md:text-[11vw] font-black italic tracking-tighter uppercase leading-[0.75]">
+                LIMITLESS<br/><span className="text-outline-mono">HORIZON</span>
+              </h1>
+            </motion.div>
 
-      {/* --- DATA STREAM MARQUEE --- */}
-      <div className="bg-cyan-500 text-black py-3 border-y border-cyan-500 overflow-hidden -rotate-1 transform scale-105">
-        <div className="whitespace-nowrap animate-marquee flex gap-10">
-          {[...Array(10)].map((_, i) => (
-             <span key={i} className="text-sm font-black uppercase tracking-[0.3em] flex items-center gap-4">
-               🛰️ SATELLITE LINK ESTABLISHED <span className="text-black/50">::</span> 
-               TRANSITING VECTOR 090 <span className="text-black/50">::</span>
-               FUEL_LOAD: 88% <span className="text-black/50">::</span>
-             </span>
-          ))}
-        </div>
-      </div>
-
-      {/* --- STATS GRID --- */}
-      <section className="py-20 px-6 bg-black border-b border-cyan-500/20">
-        <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-10 text-center">
-           {[
-             { num: "500+", label: "Vessels Managed" },
-             { num: "0.02ms", label: "Link Latency" },
-             { num: "GLOBAL", label: "ATC Coverage" }
-           ].map((stat, i) => (
-             <div key={i} className="group cursor-default">
-               <h3 className="text-5xl md:text-6xl font-black mb-2 text-white group-hover:text-cyan-400 transition-colors">{stat.num}</h3>
-               <p className="font-bold text-cyan-800 text-xs uppercase tracking-[0.5em]">{stat.label}</p>
-             </div>
-           ))}
-        </div>
-      </section>
-
-      {/* --- CORE MODULES --- */}
-      <section className="py-24 px-6 max-w-7xl mx-auto">
-        <div className="mb-16 text-center">
-          <h2 className="text-4xl md:text-6xl font-black mb-4 text-white uppercase tracking-tighter">System Modules</h2>
-          <p className="text-cyan-700 font-bold uppercase tracking-widest text-xs">Hardware-Software integration for elite flight ops.</p>
-        </div>
-        
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <FeatureCard 
-            title="Auto-Pilot v4" 
-            desc="AI-driven flight adjustment with zero human latency." 
-            icon={<Cpu />} 
-            color="hover:bg-cyan-500/10" 
-          />
-          <FeatureCard 
-            title="ATC Overlink" 
-            desc="Direct neural communication with international towers." 
-            icon={<Radio />} 
-            color="hover:bg-yellow-400/10" 
-          />
-          <FeatureCard 
-            title="Fleet Telemetry" 
-            desc="Real-time fuel, heat, and engine health diagnostics." 
-            icon={<Activity />} 
-            color="hover:bg-purple-500/10" 
-          />
-          <FeatureCard 
-            title="Global Shield" 
-            desc="Advanced weather avoidance and security protocols." 
-            icon={<ShieldCheck />} 
-            color="hover:bg-emerald-500/10" 
-          />
-        </div>
-      </section>
-
-      {/* --- FAQ / SYSTEM DOCS --- */}
-      <section className="py-20 px-6 max-w-3xl mx-auto">
-         <h2 className="text-3xl font-black mb-10 text-center text-white uppercase tracking-widest">Protocol Query</h2>
-         <div className="space-y-4">
-            <FaqItem question="Vessel Compatibility?" answer="NORS Aviation is compatible with all Boeing, Airbus, and Lockheed-Martin digital glass cockpits." />
-            <FaqItem question="Data Privacy?" answer="End-to-end 2048-bit encryption for all flight data and mission-critical communications." />
-            <FaqItem question="Offline Redundancy?" answer="Local nodes sustain ATC coordination for up to 48 hours without satellite uplink." />
-         </div>
-      </section>
-
-      {/* --- FOOTER --- */}
-      <footer className="bg-[#0a0a0a] text-cyan-900 py-16 px-6 border-t border-cyan-500/50">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center text-center md:text-left">
-           <div className="mb-8 md:mb-0">
-              <h2 className="text-3xl font-black italic mb-4 text-white">NORS AVIATION.</h2>
-              <p className="max-w-sm text-xs leading-loose opacity-50 font-bold uppercase tracking-widest">
-                Official Fleet Management Division. Unauthorized access is a violation of international aviation law.
+            <motion.div 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              transition={{ delay: 1 }}
+              className="mt-16 flex flex-col items-center gap-10"
+            >
+              <p className="max-w-md text-zinc-500 font-mono text-[11px] uppercase tracking-[0.3em] leading-loose">
+                Next-generation avionics and neural-link telemetry for elite fleet commanders. Optimized for zero-latency execution.
               </p>
-           </div>
-           <div className="flex gap-8 text-[10px] font-black tracking-[0.3em]">
-              <a href="#" className="text-cyan-500 hover:text-white transition-colors underline underline-offset-8">TWITTER.NET</a>
-              <a href="#" className="text-cyan-500 hover:text-white transition-colors underline underline-offset-8">GTIHUB.NAS</a>
-              <a href="#" className="text-cyan-500 hover:text-white transition-colors underline underline-offset-8">PRIVACY_PROTOCOL</a>
-           </div>
-        </div>
-      </footer>
+              <Link to="/login" className="btn-mono group flex items-center gap-4">
+                Initialize Access <Zap size={14} className="group-hover:text-yellow-400 transition-colors" />
+              </Link>
+            </motion.div>
+          </div>
+          
+          <motion.div 
+            style={{ opacity: useTransform(smoothProgress, [0, 0.1], [1, 0]) }}
+            className="absolute bottom-10 flex flex-col items-center gap-4"
+          >
+            <span className="text-[9px] font-bold uppercase tracking-[0.5em] text-zinc-700">Scroll to Decrypt</span>
+            <ChevronDown size={16} className="text-zinc-800 animate-bounce" />
+          </motion.div>
+        </section>
 
-    </div>
+        {/* --- SECTION 2: THE "STACKING" DOSSIERS --- */}
+        <section className="relative z-10 px-6 md:px-20 pb-40">
+          <div className="max-w-6xl mx-auto space-y-[40vh]">
+            <StackCard 
+              num="01" 
+              title="QUANTUM_SYNC" 
+              desc="Our sub-millisecond handshake protocol ensures your fleet's telemetry is synchronized across orbital relays with zero packet loss." 
+              details={["2048-bit RSA Encryption", "Sub-1ms Latency", "Global Multi-Node"]}
+              icon={<Activity size={48}/>}
+              image="https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2072"
+            />
+            <StackCard 
+              num="02" 
+              title="GHOST_RADAR" 
+              desc="Proprietary predictive pathing algorithms visualize vessel vectors 60 seconds before they occur, allowing for preemptive logistics management." 
+              details={["AI Predictive Vectors", "Real-time Intercepts", "Thermal Mapping"]}
+              icon={<Target size={48}/>}
+              image="https://images.unsplash.com/photo-1517976487492-5750f3195933?q=80&w=2070"
+            />
+            <StackCard 
+              num="03" 
+              title="AERO_SHIELD" 
+              desc="Advanced security protocols wrap all communications in a hardware-encrypted shroud, rendering your strategic operations invisible to third-party scans." 
+              details={["Military Grade Security", "Signal Masking", "Protocol Scrubbing"]}
+              icon={<ShieldCheck size={48}/>}
+              image="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=2070"
+            />
+          </div>
+        </section>
+
+        {/* --- SECTION 3: PROTOCOL DATA MARQUEE --- */}
+        <div className="py-20 flex overflow-hidden border-y border-white/5 bg-zinc-950/50 backdrop-blur-md">
+          <motion.div 
+            animate={{ x: [0, -1000] }} 
+            transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+            className="flex gap-20 items-center whitespace-nowrap"
+          >
+            {[...Array(6)].map((_, i) => (
+              <span key={i} className="text-[6vw] font-black italic uppercase text-zinc-800 flex items-center gap-10">
+                Data_Stream_Stable <Globe size={40} className="text-white" /> Link_Established
+              </span>
+            ))}
+          </motion.div>
+        </div>
+
+        {/* --- FINAL CTA: THE HANDSHAKE --- */}
+        <section className="h-screen flex flex-col items-center justify-center relative overflow-hidden">
+          <div className="absolute inset-0 bg-white/5 radial-blur opacity-20" />
+          <motion.div 
+            whileInView={{ scale: [0.9, 1], opacity: [0, 1] }}
+            className="text-center z-10"
+          >
+            <h2 className="text-[12vw] font-black italic uppercase mb-10 leading-none">
+              COMMAND<br /><span className="text-zinc-800">ACCEPTED.</span>
+            </h2>
+            <Link to="/register" className="btn-mono text-2xl group flex items-center gap-6 px-16 py-8">
+              INITIALIZE <ArrowRight className="group-hover:translate-x-4 transition-transform" />
+            </Link>
+          </motion.div>
+        </section>
+
+        {/* --- FOOTER: THE VOID --- */}
+        <footer className="py-10 px-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
+          <div className="flex items-center gap-4 text-[9px] font-black tracking-[0.4em] text-zinc-600">
+            <Terminal size={12} />
+            <span>NORS_AEROSPACE_DIV // ALL_RIGHTS_RESERVED</span>
+          </div>
+          <div className="flex gap-8 text-[9px] font-black tracking-[0.2em] text-zinc-500">
+            <a href="#" className="hover:text-white transition-colors">TERMINAL_LOGS</a>
+            <a href="#" className="hover:text-white transition-colors">PRIVACY_SHROUD</a>
+          </div>
+        </footer>
+      </div>
+    </ReactLenis>
   );
 }
 
-// --- SUB COMPONENTS ---
+// --- REFINED STACKING COMPONENT ---
+function StackCard({ num, title, desc, details, icon, image }) {
+  const cardRef = useRef(null);
+  const isInView = useInView(cardRef, { margin: "-20% 0px -20% 0px" });
+  
+  const { scrollYProgress } = useScroll({
+    target: cardRef,
+    offset: ["start end", "start start"]
+  });
 
-function FeatureCard({ title, desc, icon, color }) {
+  const scale = useSpring(useTransform(scrollYProgress, [0, 1], [0.85, 1]), { stiffness: 100, damping: 30 });
+  const rotate = useTransform(scrollYProgress, [0, 1], [2, 0]);
+
   return (
     <motion.div 
-      whileHover={{ scale: 1.02 }}
-      className={`p-6 bg-black border border-cyan-500/20 rounded-sm transition-all ${color} group cursor-crosshair`}
+      ref={cardRef}
+      style={{ scale, rotate }}
+      className={`sticky top-[15vh] h-[75vh] w-full bg-[#080808] border ${isInView ? 'border-white/20 shadow-[0_0_80px_rgba(255,255,255,0.05)]' : 'border-white/5'} rounded-3xl overflow-hidden flex flex-col md:flex-row transition-colors duration-1000`}
     >
-      <div className="w-12 h-12 bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center mb-4 text-cyan-400 group-hover:text-white transition-colors">
-        {React.cloneElement(icon, { size: 24 })}
+      <div className="flex-1 p-10 md:p-16 flex flex-col justify-between">
+        <div className="space-y-8">
+          <div className="flex items-center gap-4">
+            <span className="font-mono text-zinc-500 text-sm tracking-widest">{num}</span>
+            <div className="h-[1px] w-12 bg-zinc-800" />
+          </div>
+          <h3 className="text-5xl md:text-7xl font-black italic uppercase leading-none tracking-tighter">{title}</h3>
+          <p className="text-zinc-500 text-xs font-bold uppercase tracking-[0.2em] leading-relaxed max-w-sm">{desc}</p>
+          
+          <ul className="space-y-2 pt-6">
+            {details.map((detail, i) => (
+              <li key={i} className="flex items-center gap-3 text-[10px] font-black tracking-widest text-zinc-400">
+                <Zap size={10} className="text-white" /> {detail}
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div className="text-white/10 group-hover:text-white/40 transition-colors">{icon}</div>
       </div>
-      <h3 className="text-sm font-black mb-2 text-white uppercase tracking-widest">{title}</h3>
-      <p className="text-[11px] font-bold text-cyan-900 leading-relaxed uppercase tracking-tight group-hover:text-cyan-700 transition-colors">{desc}</p>
+      <div className="flex-1 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-[#080808] via-[#080808]/40 to-transparent z-10" />
+        <motion.img 
+          initial={{ scale: 1.2 }}
+          animate={isInView ? { scale: 1 } : { scale: 1.2 }}
+          transition={{ duration: 2 }}
+          src={image} 
+          alt={title} 
+          className="h-full w-full object-cover grayscale opacity-30" 
+        />
+      </div>
     </motion.div>
-  );
-}
-
-function FaqItem({ question, answer }) {
-  const [isOpen, setIsOpen] = useState(false);
-  return (
-    <div className="border border-cyan-500/30 bg-black/50 backdrop-blur-sm">
-      <button 
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex justify-between items-center p-5 text-left font-black text-xs tracking-widest uppercase hover:bg-cyan-500/10 text-cyan-400"
-      >
-        {`> ${question}`}
-        <ChevronDown className={`transition-transform ${isOpen ? "rotate-180 text-yellow-400" : ""}`} />
-      </button>
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div 
-            initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
-            className="overflow-hidden"
-          >
-            <div className="p-5 pt-0 text-[11px] text-cyan-800 font-bold uppercase leading-relaxed border-t border-cyan-500/10">
-              {answer}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
   );
 }

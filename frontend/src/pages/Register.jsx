@@ -1,8 +1,11 @@
-import { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { register } from "../api";
 import { useNavigate, Link } from "react-router-dom";
-import { ArrowRight, Lock, Mail, AlertCircle, Plane, UserPlus, ShieldAlert, Cpu } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { 
+  ShieldAlert, ArrowRight, Satellite, ShieldCheck, 
+  Fingerprint, Zap, Loader2, Disc
+} from "lucide-react";
 
 export default function Register() {
   const [email, setEmail] = useState("");
@@ -11,183 +14,170 @@ export default function Register() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const nav = useNavigate();
 
+  // Handle Submission
   async function handleSubmit(e) {
     e.preventDefault();
     setMsg("");
     setIsSubmitting(true);
-    
-    try {
-      const res = await register(email, password);
-      if (res?.error) {
-        setMsg(res.error);
+    // Simulate a "Handshake" delay for better UI feel
+    setTimeout(async () => {
+      try {
+        const res = await register(email, password);
+        if (res?.error) {
+          setMsg(res.error);
+          setIsSubmitting(false);
+        } else { nav("/login"); }
+      } catch (err) {
+        setMsg("Uplink Timeout: Signal Lost.");
         setIsSubmitting(false);
-      } else {
-        localStorage.setItem("userEmail", email); 
-        nav("/verify"); 
       }
-    } catch (err) {
-      setMsg("Registration failed. System rejected credentials.");
-      setIsSubmitting(false);
-    }
+    }, 1500);
   }
 
-  return (
-    <div className="min-h-screen bg-[#050505] font-mono text-cyan-400 flex items-center justify-center p-6 relative overflow-hidden">
-      
-      {/* --- CYBERPUNK LAYERS --- */}
-      
-      {/* 1. The Scanline Effect */}
-      <div className="absolute inset-0 z-50 pointer-events-none opacity-[0.03] bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,118,0.06))] bg-[length:100%_2px,3px_100%]" />
+  // Rapid Random Data Strings for Background
+  const dataPackets = useMemo(() => ["0XFF-CORE", "LNK-STABLE", "CMD-AUTH", "7700-EMRG", "MACH-0.85"], []);
 
-      {/* 2. Grid & Glitch Glow */}
-      <div className="absolute inset-0 z-0 opacity-10" 
-           style={{ backgroundImage: 'linear-gradient(#0891b2 1px, transparent 1px), linear-gradient(90deg, #0891b2 1px, transparent 1px)', backgroundSize: '40px 40px' }}>
+  return (
+    <div className="min-h-screen bg-[#020202] flex items-center justify-center p-4 relative overflow-hidden font-mono selection:bg-white selection:text-black">
+      
+      {/* --- LAYER 1: THE DATA STREAM BACKGROUND --- */}
+      <div className="absolute inset-0 flex flex-wrap gap-10 p-10 opacity-[0.03] pointer-events-none overflow-hidden">
+        {Array.from({ length: 20 }).map((_, i) => (
+          <motion.div
+            key={i}
+            animate={{ y: [0, -100, 0], opacity: [0, 1, 0] }}
+            transition={{ duration: Math.random() * 5 + 5, repeat: Infinity }}
+            className="text-[10px] whitespace-nowrap"
+          >
+            {Array(10).fill(dataPackets[Math.floor(Math.random() * dataPackets.length)]).join(" // ")}
+          </motion.div>
+        ))}
       </div>
 
-      {/* 3. Floating Aviation Elements */}
-      <FloatingShape color="bg-cyan-500/20" size="w-20 h-20" top="15%" left="10%" delay={0} icon={<Plane className="text-cyan-400" />} />
-      <FloatingShape color="bg-yellow-500/20" size="w-16 h-16" bottom="20%" left="5%" delay={1.5} icon={<ShieldAlert className="text-yellow-400" />} />
-      <FloatingShape color="bg-purple-500/20" size="w-24 h-24" top="10%" right="15%" delay={0.5} icon={<Cpu className="text-purple-400" />} />
+      {/* --- LAYER 2: INTERACTIVE LASER GRID --- */}
+      <div className="absolute inset-0 z-0 perspective-[1000px]">
+        <motion.div 
+          animate={{ rotateX: [15, 25, 15] }}
+          transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+          className="absolute inset-0 bg-[linear-gradient(to_right,#1a1a1a_1px,transparent_1px),linear-gradient(to_bottom,#1a1a1a_1px,transparent_1px)] bg-[size:50px_50px] [transform:rotateX(20deg)_translateZ(-200px)]"
+        />
+      </div>
 
-      {/* --- MAIN CARD --- */}
+      {/* --- LAYER 3: REGISTRATION TERMINAL --- */}
       <motion.div 
-        initial={{ y: 50, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ type: "spring", stiffness: 100 }}
-        className="relative z-10 w-full max-w-[450px]"
+        initial={{ scale: 0.8, opacity: 0, rotateY: -20 }}
+        animate={{ scale: 1, opacity: 1, rotateY: 0 }}
+        transition={{ type: "spring", stiffness: 100, damping: 20 }}
+        className="w-full max-w-md bg-white/[0.02] backdrop-blur-2xl border border-white/10 p-10 relative z-10 rounded-sm shadow-[0_0_100px_rgba(0,0,0,0.5)]"
       >
-        {/* Header Logo */}
-        <div className="mb-8 relative group">
-           <h1 className="text-4xl font-black tracking-tighter text-white uppercase leading-none italic">
-              NORS<span className="text-cyan-500 text-5xl">.</span><span className="text-yellow-400">AVIA</span>
-           </h1>
-           <div className="flex items-center gap-2 mt-2 text-[9px] tracking-[0.5em] text-cyan-600 font-bold uppercase">
-              // REGISTER_NEW_OFFICER // SECTOR_01
-           </div>
+        {/* CORNER BRACKETS (UI GIMMICK) */}
+        <div className="absolute -top-1 -left-1 w-8 h-8 border-t-2 border-l-2 border-white/30" />
+        <div className="absolute -bottom-1 -right-1 w-8 h-8 border-b-2 border-r-2 border-white/30" />
+
+        {/* HEADER INDICATOR */}
+        <div className="flex justify-between items-center mb-10">
+          <div className="flex gap-2">
+             <motion.div animate={{ opacity: [1, 0, 1] }} transition={{ repeat: Infinity, duration: 0.2 }} className="w-1.5 h-1.5 bg-red-600 rounded-full" />
+             <span className="text-[9px] font-bold uppercase tracking-widest text-zinc-500">Live_Uplink</span>
+          </div>
+          <span className="text-[9px] font-bold text-zinc-700">0.002MS</span>
         </div>
 
-        {/* The Card Stack Effect */}
-        <div className="relative">
-           {/* Shadow Layers */}
-           <div className="absolute top-3 left-[-8px] w-full h-full bg-cyan-900/50 border border-cyan-500/30 rounded-lg -z-20 transform -rotate-1"></div>
-           <div className="absolute top-1 left-[-4px] w-full h-full bg-black border border-cyan-500/20 rounded-lg -z-10"></div>
-
-           {/* Actual Card (Terminal) */}
-           <div className="bg-black/90 backdrop-blur-xl border border-cyan-500/40 rounded-lg p-8 md:p-10 relative overflow-hidden">
-              
-              {/* Corner Badge */}
-              <div className="absolute -top-1 -right-1 bg-cyan-500 text-black px-4 py-1 font-black text-[10px] uppercase tracking-widest">
-                  Level 0 Clearance
-              </div>
-
-              <div className="mt-4 mb-8">
-                 <h2 className="text-2xl font-black mb-1 flex items-center gap-2 text-white uppercase tracking-tight">
-                    Enlistment <UserPlus className="text-cyan-500" />
-                 </h2>
-                 <p className="text-cyan-900 text-[10px] font-bold uppercase tracking-widest">Initialize your pilot credentials.</p>
-              </div>
-
-              <form onSubmit={handleSubmit} className="space-y-6">
-                 <InputField 
-                    label="Officer Uplink (Email)" 
-                    type="email" 
-                    placeholder="NAME@NORS.AVIA"
-                    value={email}
-                    onChange={setEmail}
-                    icon={<Mail size={18} />}
-                 />
-
-                 <InputField 
-                    label="Access Cipher (Password)" 
-                    type="password" 
-                    placeholder="SET_ENCRYPTION_KEY"
-                    value={password}
-                    onChange={setPassword}
-                    icon={<Lock size={18} />}
-                    isPassword
-                 />
-
-                 {/* Error Message */}
-                 {msg && (
-                    <motion.div 
-                       initial={{ opacity: 0, scale: 0.95 }}
-                       animate={{ opacity: 1, scale: 1 }}
-                       className="bg-red-500/10 border border-red-500 text-red-500 px-4 py-3 text-[10px] font-bold flex items-center gap-3"
-                    >
-                       <AlertCircle className="shrink-0" size={16} />
-                       <span>[SYSTEM_ERROR] :: {msg.toUpperCase()}</span>
-                    </motion.div>
-                 )}
-
-                 {/* Submit Button */}
-                 <button 
-                    type="submit" 
-                    disabled={isSubmitting}
-                    className="group w-full bg-cyan-500 text-black py-4 font-black text-sm tracking-[0.2em] shadow-[4px_4px_0px_0px_#fbbf24] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] active:scale-95 transition-all flex items-center justify-center gap-2 relative overflow-hidden"
-                    style={{ clipPath: 'polygon(5% 0%, 100% 0%, 100% 75%, 95% 100%, 0% 100%, 0% 25%)' }}
-                 >
-                    {isSubmitting ? "ENCRYPTING..." : "INITIALIZE_ENLISTMENT"}
-                    {!isSubmitting && <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />}
-                 </button>
-              </form>
-
-              <div className="mt-8 text-center pt-6 border-t border-cyan-950">
-                 <p className="text-[10px] font-bold text-cyan-900 uppercase tracking-widest">
-                    Existing personnel?{" "}
-                    <Link to="/login" className="text-cyan-400 hover:text-white transition-colors underline decoration-cyan-500 underline-offset-4">
-                        Access_Terminal
-                    </Link>
-                 </p>
-              </div>
-           </div>
+        <div className="text-center mb-12">
+          <motion.div 
+            animate={{ rotate: 360 }}
+            transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+            className="inline-block p-4 border border-dashed border-white/10 rounded-full mb-6"
+          >
+             <div className="bg-white p-3 rounded-full">
+               <Zap size={24} className="text-black fill-current" />
+             </div>
+          </motion.div>
+          <h2 className="text-3xl font-black uppercase tracking-tighter italic">Enroll_Operator</h2>
+          <p className="text-[10px] text-zinc-500 mt-2 tracking-[0.3em]">SECURE_ENTRY_AUTHORIZED</p>
         </div>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <InputField 
+            label="CALL_SIGN" 
+            placeholder="PILOT@NORS.AVIA" 
+            type="email" 
+            value={email} 
+            onChange={(e) => setEmail(e.target.value)} 
+          />
+          <InputField 
+            label="ACCESS_KEY" 
+            placeholder="********" 
+            type="password" 
+            value={password} 
+            onChange={(e) => setPassword(e.target.value)} 
+          />
+
+          <AnimatePresence>
+            {msg && (
+              <motion.div 
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="bg-red-950/20 border border-red-500/50 p-4 text-[10px] text-red-500 flex items-center gap-3 overflow-hidden"
+              >
+                <ShieldAlert size={14} /> ERR_04: {msg}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <motion.button 
+            whileHover={{ scale: 1.02, backgroundColor: "#fff", color: "#000" }}
+            whileTap={{ scale: 0.98 }}
+            disabled={isSubmitting}
+            className="w-full py-5 bg-zinc-900 border border-white/10 text-white font-black uppercase tracking-[0.2em] text-xs flex items-center justify-center gap-4 transition-all"
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="animate-spin" size={16} /> 
+                Uplinking_Data
+              </>
+            ) : (
+              <>
+                Initialize_Enlistment <ArrowRight size={16} />
+              </>
+            )}
+          </motion.button>
+        </form>
+
+        <div className="mt-10 pt-6 border-t border-white/5 text-center">
+          <Link to="/login" className="text-[9px] text-zinc-600 hover:text-white transition-all tracking-[0.2em] uppercase">
+            [ Exist_Operator? // Re-route_To_Login ]
+          </Link>
+        </div>
+      </motion.div>
+
+      {/* --- HUD DECORATION: SCANNING LINES --- */}
+      <motion.div 
+        animate={{ x: [-200, 200] }}
+        transition={{ duration: 4, repeat: Infinity, repeatType: "mirror" }}
+        className="fixed bottom-10 right-10 w-40 h-40 border border-white/5 rounded-full flex items-center justify-center opacity-20"
+      >
+        <Disc size={60} className="animate-spin-slow text-white" />
       </motion.div>
     </div>
   );
 }
 
-// --- SUB COMPONENTS ---
-
-function InputField({ label, type, placeholder, value, onChange, icon }) {
-   return (
-      <div className="space-y-2">
-         <label className="text-[10px] font-bold text-cyan-700 uppercase tracking-[0.3em] ml-1">{label}</label>
-         <div className="relative group">
-            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-cyan-800 group-focus-within:text-cyan-400 transition-colors">
-               {icon}
-            </div>
-            <input
-               type={type}
-               value={value}
-               onChange={(e) => onChange(e.target.value)}
-               className="w-full bg-cyan-950/20 border border-cyan-900 focus:border-cyan-400 py-3.5 pl-11 pr-4 font-bold outline-none transition-all text-cyan-400 text-xs placeholder-cyan-900"
-               placeholder={placeholder}
-               required
-            />
-            <div className="absolute bottom-0 left-0 h-[2px] w-0 bg-yellow-400 group-focus-within:w-full transition-all duration-500" />
-         </div>
+function InputField({ label, placeholder, type, value, onChange }) {
+  return (
+    <div className="space-y-2 group">
+      <div className="flex items-center gap-2">
+        <div className="w-1 h-1 bg-white group-focus-within:bg-blue-500" />
+        <label className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">{label}</label>
       </div>
-   );
-}
-
-function FloatingShape({ color, size, top, left, right, bottom, delay, icon }) {
-   return (
-      <motion.div
-         animate={{ 
-            y: [0, -30, 0], 
-            rotate: [0, 5, -5, 0],
-            opacity: [0.2, 0.5, 0.2]
-         }}
-         transition={{ 
-            duration: 8, 
-            repeat: Infinity, 
-            ease: "easeInOut",
-            delay: delay
-         }}
-         className={`absolute ${color} ${size} border border-cyan-500/20 rounded-xl flex items-center justify-center text-3xl z-0 hidden md:flex`}
-         style={{ top, left, right, bottom }}
-      >
-         {icon}
-      </motion.div>
-   )
+      <input 
+        type={type} 
+        value={value} 
+        onChange={onChange}
+        placeholder={placeholder}
+        className="w-full bg-white/[0.03] border border-white/5 p-4 text-xs focus:outline-none focus:border-white/20 focus:bg-white/[0.07] transition-all text-white placeholder:text-zinc-800"
+      />
+    </div>
+  );
 }

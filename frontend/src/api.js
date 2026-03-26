@@ -2,13 +2,16 @@ const API_URL = "http://localhost:5000/api";
 
 /**
  * 🛰️ HEADER GENERATOR
- * Handles standard JSON transmissions and Multipart (File) uploads.
+ * Optimized for NORS_OS v4. Handles standard JSON and Multipart-FormData.
  */
 const getHeaders = (isMultipart = false) => {
     const token = localStorage.getItem("token");
     const headers = {};
     if (token) headers["Authorization"] = `Bearer ${token}`;
+
+    // CRITICAL: For FormData/Multipart, let the browser set the boundary automatically.
     if (!isMultipart) headers["Content-Type"] = "application/json";
+
     return headers;
 };
 
@@ -50,6 +53,20 @@ export const getListingById = (id) =>
         return res.json();
     });
 
+/**
+ * 🚀 INITIATE_FLEET_DEPLOYMENT
+ * Fixed: This was missing and caused the "not a function" error.
+ */
+export const createListing = (formData) =>
+    fetch(`${API_URL}/listings`, {
+        method: "POST",
+        headers: getHeaders(true), // Set to true because we're sending FormData (images)
+        body: formData
+    }).then(res => {
+        if (!res.ok) throw new Error("DEPLOYMENT_REJECTED");
+        return res.json();
+    });
+
 // ==========================================
 // 👤 PERSONNEL & PROFILE (BIOMETRICS)
 // ==========================================
@@ -83,15 +100,12 @@ export const searchPersonnel = (query) =>
 // 💬 COMMS TACTICAL SUITE (UPGRADED)
 // ==========================================
 
-// 📥 SCAN_INBOX: Get all active personnel frequencies
 export const getInbox = () =>
     fetch(`${API_URL}/chat/inbox`, { headers: getHeaders() }).then(res => res.json());
 
-// 📂 DECRYPT_HISTORY: Get 1:1 message history with specific personnel
 export const getChatHistory = (partnerId) =>
     fetch(`${API_URL}/chat/history/${partnerId}`, { headers: getHeaders() }).then(res => res.json());
 
-// ⚡ INITIATE_TRANSMISSION: Save a new packet (Supports Text + Images)
 export const sendMessage = (packet) =>
     fetch(`${API_URL}/chat/send`, {
         method: "POST",
@@ -99,7 +113,6 @@ export const sendMessage = (packet) =>
         body: JSON.stringify(packet)
     }).then(res => res.json());
 
-// 🖼️ UPLOAD_CHAT_MEDIA: Upload images specifically for chat attachments
 export const uploadChatImage = (formData) =>
     fetch(`${API_URL}/chat/upload`, {
         method: "POST",
@@ -107,14 +120,12 @@ export const uploadChatImage = (formData) =>
         body: formData
     }).then(res => res.json());
 
-// 🗑️ SCRUB_MESSAGE: Delete/Unsend a transmission from the database
 export const deleteMessage = (messageId) =>
     fetch(`${API_URL}/chat/message/${messageId}`, {
         method: "DELETE",
         headers: getHeaders()
     }).then(res => res.json());
 
-// 📑 SECTOR_LOGS: Get messages for a specific listing/flight sector
 export const getListingMessages = (listingId) =>
     fetch(`${API_URL}/chat/listing/${listingId}`, { headers: getHeaders() }).then(res => {
         if (!res.ok) return [];
@@ -130,6 +141,7 @@ const apiBundle = {
     verifyOtp,
     fetchListings,
     getListingById,
+    createListing, // 👈 Added to the bridge
     getProfile,
     updateProfile,
     uploadPhoto,

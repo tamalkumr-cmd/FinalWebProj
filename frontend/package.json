@@ -9,10 +9,12 @@
         "preview": "vite preview"
     },
     "dependencies": {
+        "@studio-freight/lenis": "^1.0.42",
+        "@studio-freight/react-lenis": "^0.0.47",
         "axios": "^1.13.5",
         "firebase": "^12.9.0",
         "firebase-admin": "^13.6.1",
-        "framer-motion": "^12.34.1",
+        "framer-motion": "^12.38.0",
         "jspdf": "^4.2.1",
         "jspdf-autotable": "^5.0.7",
         "leaflet": "^1.9.4",

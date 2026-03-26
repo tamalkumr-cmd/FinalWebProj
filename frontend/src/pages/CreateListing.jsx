@@ -1,18 +1,18 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../api";
 import { motion } from "framer-motion";
 import { 
   Plane, Globe, ArrowRight, 
   Upload, Activity, Cloud, Navigation,
-  Cpu, User, Zap, Database
+  Cpu, User, Zap, Database, Terminal, ShieldAlert,
+  ChevronLeft, Settings, Info
 } from "lucide-react";
 import { FLEET_MODELS } from "../constants/fleet";
 
 export default function CreateListing() {
   const navigate = useNavigate();
   
-  // ✈️ ADVANCED OPERATOR STATE
   const [formData, setFormData] = useState({ 
     airline: "", 
     manufacturer: "BOEING", 
@@ -37,7 +37,6 @@ export default function CreateListing() {
   const [preview, setPreview] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Sync Hardware Selection
   const handleManufacturerChange = (brand) => {
     const firstModel = FLEET_MODELS[brand][0];
     setFormData({
@@ -62,7 +61,6 @@ export default function CreateListing() {
     setIsSubmitting(true);
     try {
       const data = new FormData();
-      
       Object.keys(formData).forEach(key => {
         if (key.includes('Lat') || key.includes('Lng') || key === 'fuelLoad' || key === 'seatsCount') {
             data.append(key, parseFloat(formData[key]) || 0);
@@ -70,10 +68,7 @@ export default function CreateListing() {
             data.append(key, formData[key]);
         }
       });
-      
       if (coverImage) data.append("image", coverImage);
-      
-      console.log("LOG: Initiating_Fleet_Deployment...");
       await api.createListing(data);
       navigate("/dashboard");
     } catch (err) {
@@ -83,151 +78,168 @@ export default function CreateListing() {
   };
 
   return (
-    <div className="min-h-screen bg-[#030712] text-slate-300 font-mono selection:bg-cyan-500 selection:text-black">
-      
-      {/* HUD DECOR */}
-      <div className="fixed inset-0 pointer-events-none opacity-20">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-cyan-500/10 blur-[120px] rounded-full" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/10 blur-[120px] rounded-full" />
+    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 font-mono selection:bg-sky-500 selection:text-white p-4 md:p-8">
+      {/* --- CLOUD BACKGROUND DECOR --- */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden opacity-40">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-sky-200 blur-[120px] rounded-full" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-100 blur-[120px] rounded-full" />
       </div>
 
-      <div className="relative z-10 max-w-7xl mx-auto p-6 md:p-12">
-        
-        {/* HEADER */}
-        <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-16 gap-6">
+      <div className="max-w-7xl mx-auto space-y-12 relative z-10">
+        {/* --- HEADER --- */}
+        <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-8 pb-10 border-b border-slate-200">
           <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
-            <div className="flex items-center gap-3 mb-3">
-              <div className="px-2 py-1 bg-cyan-500/10 border border-cyan-500/20 rounded text-[9px] font-black text-cyan-500 tracking-[0.4em] uppercase">
-                Status: Config_Mode
-              </div>
-              <div className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Fleet_Registry_v2.4</div>
-            </div>
-            <h1 className="text-5xl font-black text-white italic tracking-tighter uppercase leading-none">
-              Initialize_<span className="text-cyan-500">Mission</span>
+            <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-slate-400 hover:text-sky-600 transition-colors text-[9px] font-black uppercase tracking-widest mb-6">
+               <ChevronLeft size={12} /> Return_To_Terminal
+            </button>
+            <h1 className="text-6xl font-black italic tracking-tighter uppercase leading-none text-slate-900">
+              Initialize_<span className="text-slate-300">Manifest</span>
             </h1>
           </motion.div>
 
-          <button onClick={() => navigate("/dashboard")} className="text-[10px] font-black text-slate-500 hover:text-white uppercase tracking-widest border border-white/5 px-6 py-3 rounded-2xl bg-white/5 backdrop-blur-md transition-all">
-            [ Abort_Mission ]
-          </button>
+          <div className="flex items-center gap-6">
+            <div className="text-right hidden lg:block">
+              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Protocol: ICAO_V4</p>
+              <p className="text-[10px] font-black text-sky-600 uppercase italic">Status: Cloud_Sync_Active</p>
+            </div>
+            <button onClick={() => navigate("/dashboard")} className="px-8 py-3 bg-white border border-slate-200 text-slate-500 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-slate-50 transition-all">
+               [ Abort_Uplink ]
+            </button>
+          </div>
         </header>
 
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-10">
           
-          {/* LEFT: HARDWARE & CREW */}
-          <div className="lg:col-span-4 space-y-6">
+          {/* --- LEFT: HARDWARE & SIGNATURE --- */}
+          <div className="lg:col-span-4 space-y-10">
             
-            {/* VIZUAL SIGNATURE */}
-            <div className="bg-white/5 border border-white/10 rounded-[2.5rem] p-8 backdrop-blur-xl">
-              <SectionLabel label="Visual_ID" icon={<Cloud size={12}/>} />
-              <div className="relative aspect-video rounded-3xl border-2 border-dashed border-white/10 bg-black/40 flex items-center justify-center overflow-hidden group transition-all hover:border-cyan-500/40">
+            {/* 📸 VISUAL SIGNATURE */}
+            <div className="space-y-6">
+              <SectionLabel label="Vessel_Signature" icon={<Terminal size={12}/>} />
+              <div className="relative aspect-video rounded-[2.5rem] border border-slate-200 bg-white shadow-sm flex flex-col items-center justify-center overflow-hidden group hover:border-sky-300 transition-all duration-700">
                 {preview ? (
-                  <img src={preview} className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-all" alt="Vessel Preview" />
+                  <img src={preview} className="w-full h-full object-cover transition-all duration-1000 group-hover:scale-105" alt="Vessel Preview" />
                 ) : (
-                  <div className="flex flex-col items-center gap-4 text-slate-600">
-                    <Upload size={30} strokeWidth={1} />
-                    <span className="text-[9px] font-black uppercase tracking-widest">Upload_Profile_Image</span>
-                  </div>
+                  <>
+                    <Upload size={32} strokeWidth={1} className="text-slate-300 group-hover:text-sky-500 transition-colors" />
+                    <span className="text-[9px] font-black uppercase tracking-[0.4em] text-slate-300 mt-4 group-hover:text-sky-400">Uplink_Profile_Image</span>
+                  </>
                 )}
                 <input type="file" onChange={handleFile} className="absolute inset-0 opacity-0 cursor-pointer" />
               </div>
             </div>
 
-            {/* HARDWARE SELECTION */}
-            <div className="bg-white/5 border border-white/10 rounded-[2.5rem] p-8 space-y-6 backdrop-blur-xl">
-              <SectionLabel label="Hardware_Config" icon={<Cpu size={12}/>} />
-              <div className="grid grid-cols-2 gap-4">
+            {/* ⚙️ HARDWARE CONFIG */}
+            <div className="bg-white/80 backdrop-blur-xl border border-slate-200 rounded-[3rem] p-10 space-y-10 shadow-sm">
+              <SectionLabel label="Hardware_Dossier" icon={<Cpu size={12}/>} />
+              <div className="flex gap-4">
                 {['BOEING', 'AIRBUS'].map(brand => (
                   <button 
                     key={brand} type="button"
                     onClick={() => handleManufacturerChange(brand)}
-                    className={`py-3 rounded-xl font-black text-[9px] border transition-all ${formData.manufacturer === brand ? 'bg-cyan-500 text-black border-cyan-500' : 'bg-white/5 text-slate-500 border-white/5'}`}
+                    className={`flex-1 py-4 rounded-2xl font-black text-[10px] border transition-all duration-500 ${formData.manufacturer === brand ? 'bg-slate-900 text-white border-slate-900 shadow-lg shadow-slate-900/20' : 'bg-slate-50 text-slate-400 border-slate-100 hover:border-slate-300'}`}
                   >
-                    {brand}
+                    {brand}_SYSTEMS
                   </button>
                 ))}
               </div>
-              <div className="space-y-4">
-                <div className="flex flex-col gap-2">
-                  <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Vessel_Model</label>
-                  <select 
-                    className="bg-black border-b border-white/10 py-2 text-white font-bold focus:outline-none focus:border-cyan-500"
-                    value={formData.aircraftModel}
-                    onChange={(e) => {
-                       const selected = FLEET_MODELS[formData.manufacturer].find(m => m.model === e.target.value);
-                       setFormData({...formData, aircraftModel: selected.model, engineType: selected.engine, seatsCount: selected.cap});
-                    }}
-                  >
-                    {FLEET_MODELS[formData.manufacturer].map(m => <option key={m.model} value={m.model}>{m.model}</option>)}
-                  </select>
-                </div>
+              <div className="space-y-8">
+                <SelectField 
+                  label="Vessel_Model" 
+                  value={formData.aircraftModel}
+                  onChange={(e) => {
+                     const selected = FLEET_MODELS[formData.manufacturer].find(m => m.model === e.target.value);
+                     setFormData({...formData, aircraftModel: selected.model, engineType: selected.engine, seatsCount: selected.cap});
+                  }}
+                  options={FLEET_MODELS[formData.manufacturer].map(m => m.model)}
+                />
                 <InputField label="Assigned_Engine" value={formData.engineType} readOnly icon={<Zap size={14}/>} />
               </div>
             </div>
 
-            {/* CREW DATA */}
-            <div className="bg-white/5 border border-white/10 rounded-[2.5rem] p-8 space-y-6 backdrop-blur-xl">
-              <SectionLabel label="Crew_Manifest" icon={<User size={12}/>} />
-              <InputField label="Pilot_In_Command" placeholder="Capt. Name" onChange={e => setFormData({...formData, pilotName: e.target.value})} required />
-              <div className="flex flex-col gap-2">
-                <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Pilot_Brief</label>
+            {/* 👤 CREW MANIFEST */}
+            <div className="bg-white/80 backdrop-blur-xl border border-slate-200 rounded-[3rem] p-10 space-y-10 shadow-sm">
+              <SectionLabel label="Command_Staff" icon={<User size={12}/>} />
+              <InputField label="Pilot_In_Command" placeholder="INPUT_PIC_NAME" onChange={e => setFormData({...formData, pilotName: e.target.value})} required />
+              <div className="space-y-3">
+                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest italic ml-2">Experience_Logs</label>
                 <textarea 
-                  className="bg-transparent border-b border-white/10 py-2 text-xs text-white font-bold focus:outline-none focus:border-cyan-500 min-h-[60px]"
-                  placeholder="Experience/Bio..."
+                  className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-5 text-xs text-slate-900 focus:border-sky-300 focus:bg-white outline-none transition-all placeholder:text-slate-300 min-h-[100px] font-bold italic"
+                  placeholder="INPUT_FLIGHT_HOURS_AND_RANK..."
                   onChange={e => setFormData({...formData, pilotBio: e.target.value})}
                 />
               </div>
             </div>
           </div>
 
-          {/* RIGHT: MISSION PARAMETERS */}
-          <div className="lg:col-span-8 space-y-6">
-            <div className="bg-white/5 border border-white/10 rounded-[3rem] p-10 backdrop-blur-xl relative overflow-hidden shadow-2xl">
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-12">
+          {/* --- RIGHT: MISSION PARAMETERS --- */}
+          <div className="lg:col-span-8 space-y-10">
+            <div className="bg-white/90 backdrop-blur-xl border border-slate-200 rounded-[3rem] p-12 relative overflow-hidden shadow-sm">
+              <div className="absolute top-0 right-0 p-12 opacity-[0.03] pointer-events-none">
+                <Globe size={300} className="text-slate-900" />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-16 mb-16">
                 <InputField label="Operator_Callsign" icon={<Plane size={14}/>} placeholder="SKY-VECTOR-9" onChange={e => setFormData({...formData, airline: e.target.value})} required />
-                <div className="flex flex-col gap-2">
-                  <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Mission_Type</label>
-                  <select 
-                    className="bg-black border-b border-white/10 py-2 text-white font-bold focus:outline-none"
-                    onChange={e => setFormData({...formData, vesselType: e.target.value})}
-                  >
-                    <option value="PASSENGER">PASSENGER_UNIT</option>
-                    <option value="CARGO">FREIGHT_CARGO</option>
-                  </select>
-                </div>
+                <SelectField 
+                   label="Mission_Category" 
+                   value={formData.vesselType}
+                   onChange={e => setFormData({...formData, vesselType: e.target.value})}
+                   options={["PASSENGER", "CARGO"]}
+                />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
-                {/* LOGISTICS */}
-                <div className="space-y-8">
-                  <InputField label="Origin_Station" placeholder="MUMBAI_HUB" onChange={e => setFormData({...formData, source: e.target.value})} required />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-20">
+                {/* ORIGIN */}
+                <div className="space-y-10">
+                  <div className="flex items-center gap-4 text-slate-300 italic"><Navigation size={14} /> <span className="text-[10px] uppercase font-black tracking-widest">Departure_Sector</span></div>
+                  <InputField label="Station_ID" placeholder="MUMBAI_HUB" onChange={e => setFormData({...formData, source: e.target.value})} required />
                   <div className="grid grid-cols-2 gap-6">
-                    <InputField label="Lat" placeholder="19.07" onChange={e => setFormData({...formData, sourceLat: e.target.value})} required />
-                    <InputField label="Lng" placeholder="72.87" onChange={e => setFormData({...formData, sourceLng: e.target.value})} required />
+                    <InputField label="Vector_Lat" placeholder="19.07" onChange={e => setFormData({...formData, sourceLat: e.target.value})} required />
+                    <InputField label="Vector_Lng" placeholder="72.87" onChange={e => setFormData({...formData, sourceLng: e.target.value})} required />
                   </div>
                 </div>
 
-                <div className="space-y-8">
-                  <InputField label="Target_Terminal" placeholder="DELHI_INTL" onChange={e => setFormData({...formData, destination: e.target.value})} required />
+                {/* TARGET */}
+                <div className="space-y-10">
+                  <div className="flex items-center gap-4 text-slate-300 italic"><ShieldAlert size={14} /> <span className="text-[10px] uppercase font-black tracking-widest">Arrival_Sector</span></div>
+                  <InputField label="Terminal_ID" placeholder="DELHI_INTL" onChange={e => setFormData({...formData, destination: e.target.value})} required />
                   <div className="grid grid-cols-2 gap-6">
-                    <InputField label="Lat" placeholder="28.61" onChange={e => setFormData({...formData, destLat: e.target.value})} required />
-                    <InputField label="Lng" placeholder="77.20" onChange={e => setFormData({...formData, destLng: e.target.value})} required />
+                    <InputField label="Vector_Lat" placeholder="28.61" onChange={e => setFormData({...formData, destLat: e.target.value})} required />
+                    <InputField label="Vector_Lng" placeholder="77.20" onChange={e => setFormData({...formData, destLng: e.target.value})} required />
                   </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16 pt-16 border-t border-white/5">
-                <InputField label="Fuel_Load (L)" type="number" onChange={e => setFormData({...formData, fuelLoad: e.target.value})} required />
-                <InputField label="Departure" type="datetime-local" onChange={e => setFormData({...formData, departure: e.target.value})} required />
-                <InputField label="Arrival" type="datetime-local" onChange={e => setFormData({...formData, arrival: e.target.value})} required />
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mt-20 pt-16 border-t border-slate-100">
+                <InputField label="Fuel_Manifest (L)" type="number" onChange={e => setFormData({...formData, fuelLoad: e.target.value})} required />
+                <InputField label="Departure_Chrono" type="datetime-local" onChange={e => setFormData({...formData, departure: e.target.value})} required />
+                <InputField label="Arrival_Chrono" type="datetime-local" onChange={e => setFormData({...formData, arrival: e.target.value})} required />
               </div>
             </div>
 
-            {/* SUBMIT */}
-            <button disabled={isSubmitting} className="w-full h-24 bg-cyan-500 rounded-[2rem] flex items-center justify-center gap-4 text-black font-black uppercase italic group hover:bg-white transition-all shadow-[0_0_40px_rgba(6,182,212,0.2)]">
-              {isSubmitting ? <Activity className="animate-spin" /> : <><span className="text-xl">Commit_Mission_Briefing</span> <ArrowRight className="group-hover:translate-x-2 transition-transform" /></>}
-            </button>
+            {/* --- ACTION BAR --- */}
+            <div className="flex flex-col md:flex-row items-center gap-6">
+                <div className="flex-1 flex items-center gap-4 px-10 py-8 bg-white border border-slate-200 rounded-[2.5rem] shadow-sm">
+                    <Info size={16} className="text-sky-500" />
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-relaxed">
+                        Notice: Mission data will be synchronized with global ATC relays upon commitment.
+                    </p>
+                </div>
+                <button 
+                  disabled={isSubmitting} 
+                  className="w-full md:w-auto px-16 h-28 bg-sky-500 text-white rounded-[2.5rem] flex items-center justify-center gap-6 font-black uppercase italic group hover:bg-slate-900 transition-all active:scale-95 shadow-xl shadow-sky-500/20"
+                >
+                  {isSubmitting ? (
+                    <Activity className="animate-spin" />
+                  ) : (
+                    <>
+                      <span className="text-xl">Commit_Briefing</span> 
+                      <ArrowRight size={24} className="group-hover:translate-x-4 transition-transform duration-500" />
+                    </>
+                  )}
+                </button>
+            </div>
           </div>
         </form>
       </div>
@@ -235,21 +247,36 @@ export default function CreateListing() {
   );
 }
 
+// --- LIGHT TACTICAL COMPONENTS ---
+
 const SectionLabel = ({ label, icon }) => (
-  <div className="flex items-center gap-3 mb-6 opacity-40">
-    {icon}
-    <span className="text-[9px] font-black uppercase tracking-[0.4em]">{label}</span>
+  <div className="flex items-center gap-4 mb-4">
+    <div className="p-2 border border-slate-100 rounded-lg bg-slate-50 text-slate-400">{icon}</div>
+    <span className="text-[10px] font-black uppercase tracking-[0.5em] text-slate-400 italic">{label}</span>
   </div>
 );
 
 const InputField = ({ label, icon, ...props }) => (
-  <div className="flex flex-col gap-2 group">
-    <label className="text-[8px] font-black text-slate-500 uppercase tracking-[0.3em] flex items-center gap-2 group-focus-within:text-cyan-400 transition-colors">
+  <div className="flex flex-col gap-3 group">
+    <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.4em] italic ml-2 group-focus-within:text-sky-600 transition-colors">
       {icon} {label}
     </label>
     <input 
       {...props} 
-      className="bg-transparent border-b border-white/10 py-2 text-xs text-white font-bold focus:outline-none focus:border-cyan-500 transition-all placeholder:text-slate-800"
+      className="bg-slate-50 border border-slate-100 rounded-2xl p-5 text-xs text-slate-900 focus:border-sky-300 focus:bg-white outline-none transition-all placeholder:text-slate-200 italic font-bold"
     />
+  </div>
+);
+
+const SelectField = ({ label, value, onChange, options }) => (
+  <div className="flex flex-col gap-3">
+    <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.4em] italic ml-2">{label}</label>
+    <select 
+      value={value} 
+      onChange={onChange}
+      className="bg-slate-50 border border-slate-100 rounded-2xl p-5 text-xs text-slate-900 focus:border-sky-300 focus:bg-white outline-none transition-all cursor-pointer font-bold italic"
+    >
+      {options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+    </select>
   </div>
 );
