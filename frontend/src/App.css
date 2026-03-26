@@ -1,0 +1,25 @@
+/* Clean Dark Map - No more ghosting */
+
+.leaflet-container {
+    background: #0b0f1a !important;
+    /* Matches your dashboard background */
+}
+
+
+/* Optional: Slight contrast boost for tiles */
+
+.clean-dark-tiles {
+    filter: brightness(0.8) contrast(1.1);
+}
+
+
+/* Keep the tactical popups, they still look good */
+
+.tactical-popup .leaflet-popup-content-wrapper {
+    background: rgba(15, 23, 42, 0.9) !important;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(34, 211, 238, 0.2) !important;
+    color: #fff !important;
+    padding: 8px !important;
+    border-radius: 12px !important;
+}

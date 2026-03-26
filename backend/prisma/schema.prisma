@@ -1,0 +1,200 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==========================================
+// 👤 USER & AUTH SYSTEM (PERSONNEL DOSSIER)
+// ==========================================
+model User {
+  id              String    @id @default(uuid())
+  email           String    @unique
+  name            String?
+  phone           String?
+  password        String?
+  createdAt       DateTime  @default(now())
+  isVerified      Boolean   @default(false)
+  
+  // 📸 BIOMETRIC VISUALS
+  photoUrl        String?   // Renamed from avatarUrl to match our logic
+
+  // 🎖️ PERSONNEL DATA
+  empId           String?   @unique
+  designation     String?   @default("FLIGHT_OFFICER")
+  bio             String?   @db.Text
+
+  // ✈️ Role: PASSENGER / ADMIN / AIRLINE / CREW
+  role            String    @default("PASSENGER") 
+
+  // Relations
+  listings        Listing[] @relation("SellerListings") 
+  orders          Order[]   @relation("BuyerOrders")    
+  reviews         Review[]  @relation("UserReviews")
+  messages        Message[] @relation("SentMessages")
+  
+  // 👥 Crew assignment
+  assignedFlights Listing[] @relation("FlightCrew")
+}
+
+// ==========================================
+// 🛠️ FLEET MANAGEMENT (HARDWARE)
+// ==========================================
+model Aircraft {
+  id           String    @id @default(uuid())
+  tailNumber   String    @unique // e.g., "N12345"
+  manufacturer String    @default("BOEING")
+  model        String    // e.g., "737-MAX 8"
+  totalSeats   Int
+  
+  // Relations
+  seats        Seat[]    
+  listings     Listing[] 
+}
+
+model Seat {
+  id           String   @id @default(uuid())
+  seatNumber   String   // e.g., "1A"
+  type         String   @default("ECONOMY") // BUSINESS / ECONOMY
+  status       String   @default("AVAILABLE") 
+  
+  aircraftId   String
+  aircraft     Aircraft @relation(fields: [aircraftId], references: [id], onDelete: Cascade)
+}
+
+// ==========================================
+// 🚀 FLIGHT OPERATIONS (THE SIMULATION ENGINE)
+// ==========================================
+model Listing {
+  id             String   @id @default(uuid())
+  airline        String   // Callsign
+  
+  // Hardware Specs
+  manufacturer   String   @default("BOEING")
+  aircraftModel  String   @default("B737-MAX")
+  engineType     String   @default("CFM LEAP-1B")
+  vesselType     String   @default("PASSENGER") // PASSENGER or CARGO
+  
+  // 📍 Static Mission Coordinates (Flight Plan)
+  source          String
+  destination     String
+  sourceLat       Float?   
+  sourceLng       Float?   
+  destLat         Float?   
+  destLng         Float?   
+
+  // 🕒 Temporal Windows
+  departure       DateTime
+  arrival         DateTime 
+
+  // 🛰️ LIVE TELEMETRY
+  currentLat      Float?   
+  currentLng      Float?   
+  altitude        Int      @default(0)      
+  speed           Int      @default(850)    
+  heading         Float?   
+  
+  // 🌪️ WEATHER & REROUTING LOGIC
+  weatherStatus   String   @default("CLEAR") 
+  isDiverting     Boolean  @default(false)   
+  lastUpdate      DateTime @default(now())
+
+  // 📦 Mission Loadout
+  price           Int      @default(0)
+  seatsCount      Int      @map("seats")
+  fuelLoad        Float    @default(0) 
+  distance        Float?   
+
+  // 👥 Crew & Branding
+  pilotName       String   @default("Capt. Unknown")
+  pilotBio        String?  @db.Text
+  pilotPhoto      String?  
+  operatorLogo    String?  
+
+  // ⚙️ System Status
+  cabinClass      String?  
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  sellerId        String
+  seller          User      @relation("SellerListings", fields: [sellerId], references: [id])
+  
+  aircraftId      String?
+  aircraft        Aircraft? @relation(fields: [aircraftId], references: [id])
+
+  crew            User[]    @relation("FlightCrew")
+  images          ListingImage[]
+  orders          Order[]
+  reviews         Review[]
+  messages        Message[]
+}
+
+// ==========================================
+// 📦 BOOKING & FEEDBACK
+// ==========================================
+model Order {
+  id          String    @id @default(uuid())
+  buyerId     String
+  listingId   String    
+  passengers  Int
+  status      String    @default("CONFIRMED") 
+  amount      Int?
+  paymentId   String?
+  paidAt      DateTime?
+  createdAt   DateTime  @default(now())
+
+  buyer       User      @relation("BuyerOrders", fields: [buyerId], references: [id])
+  listing     Listing   @relation(fields: [listingId], references: [id])
+}
+
+model Review {
+  id          String   @id @default(uuid())
+  rating      Int
+  comment     String
+  createdAt   DateTime @default(now())
+  reviewerId  String
+  listingId   String
+  listing     Listing  @relation(fields: [listingId], references: [id])
+  reviewer    User     @relation("UserReviews", fields: [reviewerId], references: [id])
+}
+
+model ListingImage {
+  id        String   @id @default(uuid())
+  url       String
+  listingId String
+  Listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([listingId])
+}
+
+// ==========================================
+// 💬 COMMUNICATION & SECURITY
+// ==========================================
+model Message {
+  id        String   @id @default(uuid())
+  text      String
+  createdAt DateTime @default(now())
+  isSeen    Boolean  @default(false)
+  senderId  String
+  listingId String
+  sender    User     @relation("SentMessages", fields: [senderId], references: [id])
+  listing   Listing  @relation(fields: [listingId], references: [id])
+
+  @@index([listingId])
+}
+
+model Otp {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email     String
+  code      String
+  password  String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email])
+}
