@@ -53,7 +53,7 @@ export default function Dashboard() {
     );
 
     return result.sort((a, b) => {
-      if (sortBy === "price") return b.price - a.price;
+      // Logic for price sorting removed - defaulting to chronology
       if (sortBy === "departure") return new Date(a.departure) - new Date(b.departure);
       return 0;
     });
@@ -146,7 +146,6 @@ export default function Dashboard() {
                         onChange={(e) => setSortBy(e.target.value)}
                       >
                         <option value="departure">Filter: Chronology</option>
-                        <option value="price">Filter: Asset Value</option>
                       </select>
                       <button onClick={() => navigate("/create-listing")} className="bg-[#FF7F50] text-white px-10 py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] flex items-center gap-4 hover:bg-[#E06940] transition-all shadow-lg shadow-orange-200 active:scale-95">
                         <Plus size={20} /> Enroll Asset
@@ -198,7 +197,7 @@ export default function Dashboard() {
   );
 }
 
-// --- 🛠️ SUB-COMPONENTS (COLOR OVERHAUL) ---
+// --- 🛠️ SUB-COMPONENTS ---
 
 function InventoryRow({ f, onView, onManage, index }) {
   const isAirborne = new Date(f.departure) < new Date() && new Date(f.arrival) > new Date();
@@ -270,7 +269,7 @@ function FleetCard({ f, onClick, onManage }) {
             <h4 className="text-3xl font-black text-[#001F3F] tracking-tighter uppercase leading-none mb-4">{f.airline}</h4>
             <div className="flex justify-between mt-4 text-[10px] font-black text-blue-300 uppercase tracking-widest">
                 <span>{f.source} → {f.destination}</span>
-                <span className="text-[#007BFF] text-lg font-black">${f.price}</span>
+                {/* Price Span Removed */}
             </div>
         </div>
         <button onClick={onManage} className="mt-10 w-full bg-[#001F3F] hover:bg-[#007BFF] text-white py-6 rounded-2xl text-xs font-black uppercase tracking-[0.2em] transition-all shadow-lg active:scale-95">
