@@ -1,16 +1,20 @@
-const API_URL = "http://localhost:5000/api";
+// 🏠 LOCAL GRID ONLY
+const API_URL = "http://localhost:10000/api";
 
 /**
  * 🛰️ HEADER GENERATOR
- * Optimized for NORS_OS v4. Handles standard JSON and Multipart-FormData.
+ * Handles standard JSON and Multipart-FormData.
  */
 const getHeaders = (isMultipart = false) => {
     const token = localStorage.getItem("token");
     const headers = {};
+
     if (token) headers["Authorization"] = `Bearer ${token}`;
 
-    // CRITICAL: For FormData/Multipart, let the browser set the boundary automatically.
-    if (!isMultipart) headers["Content-Type"] = "application/json";
+    // CRITICAL: Only add JSON content-type if NOT sending a file/FormData
+    if (!isMultipart) {
+        headers["Content-Type"] = "application/json";
+    }
 
     return headers;
 };
@@ -22,21 +26,21 @@ const getHeaders = (isMultipart = false) => {
 export const login = (email, password) =>
     fetch(`${API_URL}/auth/login`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: getHeaders(), // 👈 Fixed: Using getHeaders()
         body: JSON.stringify({ email, password })
     }).then(res => res.json());
 
 export const register = (email, password) =>
     fetch(`${API_URL}/auth/register`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: getHeaders(), // 👈 Fixed: Using getHeaders()
         body: JSON.stringify({ email, password })
     }).then(res => res.json());
 
 export const verifyOtp = (email, code) =>
     fetch(`${API_URL}/auth/verify-otp`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: getHeaders(), // 👈 Fixed: Using getHeaders()
         body: JSON.stringify({ email, code })
     }).then(res => res.json());
 
@@ -53,14 +57,10 @@ export const getListingById = (id) =>
         return res.json();
     });
 
-/**
- * 🚀 INITIATE_FLEET_DEPLOYMENT
- * Fixed: This was missing and caused the "not a function" error.
- */
 export const createListing = (formData) =>
     fetch(`${API_URL}/listings`, {
         method: "POST",
-        headers: getHeaders(true), // Set to true because we're sending FormData (images)
+        headers: getHeaders(true), // 🛸 Set to true for FormData
         body: formData
     }).then(res => {
         if (!res.ok) throw new Error("DEPLOYMENT_REJECTED");
@@ -133,7 +133,7 @@ export const getListingMessages = (listingId) =>
     });
 
 // ==========================================
-// 📦 THE "BRIDGE" EXPORTS
+// 📦 THE "BRIDGE" BUNDLE
 // ==========================================
 const apiBundle = {
     login,
@@ -141,7 +141,7 @@ const apiBundle = {
     verifyOtp,
     fetchListings,
     getListingById,
-    createListing, // 👈 Added to the bridge
+    createListing,
     getProfile,
     updateProfile,
     uploadPhoto,

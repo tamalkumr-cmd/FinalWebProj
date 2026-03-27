@@ -1,12 +1,17 @@
 import express from "express";
-import { register, verifyOtp, login, googleLogin } from "../controllers/auth.controller.js";
+import { register, verifyOtp, login } from "../controllers/auth.controller.js";
 
 const router = express.Router();
 
+// 🚀 Personnel Registration Handshake
 router.post("/register", register);
-// 🛰️ CHANGED: From "/verify" to "/verify-otp" to match Frontend
+
+// 🔑 OTP Verification (Matches Frontend Hook)
 router.post("/verify-otp", verifyOtp);
+
+// 🔐 Secure Channel Login
 router.post("/login", login);
-router.post("/google", googleLogin);
+
+// 🛸 FIREBASE DECOMMISSIONED: Google route removed to prevent crashes
 
 export default router;

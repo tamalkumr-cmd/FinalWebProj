@@ -3,7 +3,6 @@ import jwt from "jsonwebtoken";
 import prisma from "../config/db.js";
 import { generateOtp } from "../utils/generateOtp.js";
 import { sendMail } from "../utils/mailer.js";
-import admin from "../config/firebaseAdmin.js";
 
 // ==========================================
 // 🚀 REGISTER (INITIATE HANDSHAKE)
@@ -25,7 +24,7 @@ export async function register(req, res) {
         // Cleanup old attempts
         await prisma.otp.deleteMany({ where: { email } });
 
-        // Store OTP + Hash with a 5-minute window (Preventing Timeout)
+        // Store OTP + Hash with a 5-minute window
         await prisma.otp.create({
             data: {
                 email,
@@ -91,7 +90,7 @@ export async function verifyOtp(req, res) {
         // Cleanup
         await prisma.otp.deleteMany({ where: { email } });
 
-        // 🎟️ GENERATE PASSPORT (JWT) - Fixes 401 Dashboard Error
+        // 🎟️ GENERATE PASSPORT (JWT)
         const token = jwt.sign({ id: user.id, email: user.email },
             process.env.JWT_SECRET, { expiresIn: "7d" }
         );
@@ -136,41 +135,5 @@ export async function login(req, res) {
     } catch (err) {
         console.error("LOGIN_ERROR:", err);
         res.status(500).json({ error: "Authentication failed." });
-    }
-}
-
-// ==========================================
-// 🌍 GOOGLE LOGIN (FEDERATED SYNC)
-// ==========================================
-export async function googleLogin(req, res) {
-    try {
-        const { token } = req.body;
-        if (!token) return res.status(400).json({ error: "Google token required." });
-
-        const decoded = await admin.auth().verifyIdToken(token);
-        const { uid, email, picture, name } = decoded;
-
-        let user = await prisma.user.findUnique({ where: { email } });
-
-        if (!user) {
-            user = await prisma.user.create({
-                data: {
-                    email,
-                    name: name || email.split("@")[0],
-                    password: null,
-                    isVerified: true,
-                    photoUrl: picture || null,
-                },
-            });
-        }
-
-        const appToken = jwt.sign({ id: user.id, email: user.email },
-            process.env.JWT_SECRET, { expiresIn: "7d" }
-        );
-
-        res.json({ token: appToken, user: { id: user.id, name: user.name } });
-    } catch (err) {
-        console.error("GOOGLE_LOGIN_ERROR:", err);
-        res.status(401).json({ error: "External signal validation failed." });
     }
 }
