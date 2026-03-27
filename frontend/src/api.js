@@ -1,5 +1,5 @@
 // 🏠 LOCAL GRID ONLY
-const API_URL = "http://localhost:10000/api";
+const API_URL = "https://norsavia.onrender.com/api";
 
 /**
  * 🛰️ HEADER GENERATOR
