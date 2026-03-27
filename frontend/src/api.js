@@ -1,53 +1,42 @@
-// 🏠 LOCAL GRID ONLY
+// 🌍 PRODUCTION GRID
 const API_URL = "https://norsavia.onrender.com/api";
 
 /**
  * 🛰️ HEADER GENERATOR
- * Handles standard JSON and Multipart-FormData.
  */
 const getHeaders = (isMultipart = false) => {
     const token = localStorage.getItem("token");
     const headers = {};
-
     if (token) headers["Authorization"] = `Bearer ${token}`;
-
-    // CRITICAL: Only add JSON content-type if NOT sending a file/FormData
     if (!isMultipart) {
         headers["Content-Type"] = "application/json";
     }
-
     return headers;
 };
 
-// ==========================================
-// 🔐 AUTHENTICATION (IDENTITY VERIFICATION)
-// ==========================================
-
+// --- AUTH ---
 export const login = (email, password) =>
     fetch(`${API_URL}/auth/login`, {
         method: "POST",
-        headers: getHeaders(), // 👈 Fixed: Using getHeaders()
+        headers: getHeaders(),
         body: JSON.stringify({ email, password })
     }).then(res => res.json());
 
 export const register = (email, password) =>
     fetch(`${API_URL}/auth/register`, {
         method: "POST",
-        headers: getHeaders(), // 👈 Fixed: Using getHeaders()
+        headers: getHeaders(),
         body: JSON.stringify({ email, password })
     }).then(res => res.json());
 
 export const verifyOtp = (email, code) =>
     fetch(`${API_URL}/auth/verify-otp`, {
         method: "POST",
-        headers: getHeaders(), // 👈 Fixed: Using getHeaders()
+        headers: getHeaders(),
         body: JSON.stringify({ email, code })
     }).then(res => res.json());
 
-// ==========================================
-// ✈️ RADAR & LISTINGS (FLIGHT OPERATIONS)
-// ==========================================
-
+// --- LISTINGS ---
 export const fetchListings = () =>
     fetch(`${API_URL}/listings`, { headers: getHeaders() }).then(res => res.json());
 
@@ -60,17 +49,14 @@ export const getListingById = (id) =>
 export const createListing = (formData) =>
     fetch(`${API_URL}/listings`, {
         method: "POST",
-        headers: getHeaders(true), // 🛸 Set to true for FormData
+        headers: getHeaders(true),
         body: formData
     }).then(res => {
         if (!res.ok) throw new Error("DEPLOYMENT_REJECTED");
         return res.json();
     });
 
-// ==========================================
-// 👤 PERSONNEL & PROFILE (BIOMETRICS)
-// ==========================================
-
+// --- USER/PROFILE ---
 export const getProfile = () =>
     fetch(`${API_URL}/users/me`, { headers: getHeaders() }).then(res => {
         if (!res.ok) throw new Error("UNAUTHORIZED");
@@ -96,10 +82,7 @@ export const searchPersonnel = (query) =>
         headers: getHeaders()
     }).then(res => res.json());
 
-// ==========================================
-// 💬 COMMS TACTICAL SUITE (UPGRADED)
-// ==========================================
-
+// --- CHAT ---
 export const getInbox = () =>
     fetch(`${API_URL}/chat/inbox`, { headers: getHeaders() }).then(res => res.json());
 
@@ -132,9 +115,6 @@ export const getListingMessages = (listingId) =>
         return res.json();
     });
 
-// ==========================================
-// 📦 THE "BRIDGE" BUNDLE
-// ==========================================
 const apiBundle = {
     login,
     register,
