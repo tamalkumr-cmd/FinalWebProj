@@ -1,215 +1,166 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { api } from '../api';
-import { motion, AnimatePresence } from 'framer-motion';
+import React from "react";
+import { motion } from "framer-motion";
 import { 
-  User, Briefcase, Hash, RefreshCw, 
-  Fingerprint, UploadCloud, ShieldCheck, 
-  ChevronRight, BadgeCheck, Terminal
-} from 'lucide-react';
+  User, 
+  ShieldCheck, 
+  Award, 
+  Activity, 
+  Clock, 
+  MapPin, 
+  ChevronRight,
+  LogOut,
+  Settings,
+  Fingerprint
+} from "lucide-react";
 
 export default function Profile() {
-  const [profile, setProfile] = useState({ 
-    name: '', 
-    empId: '', 
-    designation: 'FLIGHT_OFFICER', 
-    bio: '', 
-    photoUrl: null 
-  });
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const fileInputRef = useRef(null);
-
-  // Apple System Font Stack
-  const fontStack = "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', sans-serif";
-
-  useEffect(() => {
-    api.getProfile().then(data => {
-      if (data) {
-        setProfile({
-          ...data,
-          name: data.name || '',
-          empId: data.empId || '',
-          bio: data.bio || '',
-          designation: data.designation || 'FLIGHT_OFFICER',
-          photoUrl: data.photoUrl || null
-        });
-      }
-      setLoading(false);
-    }).catch((err) => {
-      console.error("LOAD_ERROR", err);
-      setLoading(false);
-    });
-  }, []);
-
-  const handlePhotoIngest = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    setUploading(true);
-    const formData = new FormData();
-    formData.append('photo', file);
-
-    try {
-      const response = await api.uploadPhoto(formData); 
-      if (response.url) {
-        setProfile(prev => ({ ...prev, photoUrl: response.url }));
-      }
-    } catch (err) {
-      console.error("UPLOAD_ERROR", err);
-    } finally {
-      setUploading(false);
-    }
+  // Mock data - replace with your actual user context/state
+  const userData = {
+    callsign: "Tamal",
+    registrySerial: "5512",
+    clearance: "B9",
+    status: "ACTIVE_DUTY",
+    experience: "1250_FLIGHT_HRS",
+    lastMission: "FWQFQ // WQFQF"
   };
 
-  const handleUpdate = async (e) => {
-    e.preventDefault();
-    setSaving(true);
-    try {
-      await api.updateProfile(profile);
-      alert("BIOMETRIC_DATA_STABILIZED");
-    } catch (err) {
-      console.error("SYNC_ERROR", err);
-    } finally {
-      setSaving(false);
-    }
-  };
+  return (
+    <div className="min-h-screen bg-[#F0F7FF] text-[#001F3F] font-sans p-4 md:p-8">
+      <div className="max-w-7xl mx-auto space-y-12 relative z-10">
+        
+        {/* --- TOP HUD NAVIGATION --- */}
+        <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-8 pb-10 border-b border-white/50">
+          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
+            <div className="flex items-center gap-2 text-blue-400 text-[10px] font-black uppercase tracking-[0.3em] mb-6">
+               <Fingerprint size={14} /> SECURITY_ENCRYPTED_SESSION
+            </div>
+            <h1 className="text-7xl font-black italic tracking-tighter uppercase leading-none text-[#001F3F]">
+              Personnel_<span className="text-blue-200">Dossier</span>
+            </h1>
+            <p className="mt-4 text-[11px] font-black text-blue-300 tracking-[0.4em] uppercase">Master_Record // FE38CDAB3C49</p>
+          </motion.div>
 
-  if (loading) return (
-    <div className="h-screen flex flex-col items-center justify-center bg-[#F2F2F7]">
-      <motion.div 
-        animate={{ rotate: 360 }} 
-        transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
-        className="w-12 h-12 border-4 border-slate-200 border-t-indigo-600 rounded-full mb-4"
-      />
-      <div className="text-slate-900 font-bold tracking-widest uppercase text-[10px]">
-        Syncing_Personnel_Node...
+          <div className="flex gap-4">
+            <button className="px-6 py-3 bg-white border border-white text-blue-300 text-[10px] font-black uppercase tracking-widest rounded-2xl hover:text-[#007BFF] transition-all shadow-xl shadow-blue-900/5 flex items-center gap-2">
+               <Settings size={14} /> [ CONFIG ]
+            </button>
+            <button className="px-6 py-3 bg-[#FF7F50] text-white text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-red-500 transition-all shadow-xl shadow-orange-500/20 flex items-center gap-2">
+               <LogOut size={14} /> [ TERMINATE_SESSION ]
+            </button>
+          </div>
+        </header>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+          
+          {/* --- LEFT: IDENTITY BLOCK --- */}
+          <div className="lg:col-span-4 space-y-8">
+            <div className="bg-white/70 backdrop-blur-xl border border-white rounded-[3rem] p-10 shadow-xl shadow-blue-900/5 text-center">
+              <div className="relative inline-block group">
+                <div className="absolute -inset-1 bg-gradient-to-r from-[#007BFF] to-blue-200 rounded-[3.5rem] blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
+                <div className="relative w-48 h-48 rounded-[3rem] border-8 border-white overflow-hidden shadow-2xl mx-auto bg-blue-50">
+                  <img 
+                    src="https://images.unsplash.com/photo-1544723795-3fb6469f5b39" 
+                    alt="Pilot Avatar" 
+                    className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700"
+                  />
+                </div>
+                <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-[#00E676] text-white text-[10px] font-black px-6 py-2 rounded-full shadow-lg">
+                  {userData.status}
+                </div>
+              </div>
+
+              <div className="mt-12 space-y-2">
+                <h2 className="text-4xl font-black italic text-[#001F3F] tracking-tighter uppercase">{userData.callsign}</h2>
+                <p className="text-blue-300 font-black text-[11px] tracking-[0.3em] uppercase">Clearance_Level: {userData.clearance}</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 mt-10">
+                <div className="bg-blue-50/50 p-6 rounded-3xl border border-blue-100/50">
+                  <p className="text-[9px] font-black text-blue-200 uppercase mb-1">Rank</p>
+                  <p className="text-[12px] font-black text-[#001F3F]">COMMANDER</p>
+                </div>
+                <div className="bg-blue-50/50 p-6 rounded-3xl border border-blue-100/50">
+                  <p className="text-[9px] font-black text-blue-200 uppercase mb-1">Serial</p>
+                  <p className="text-[12px] font-black text-[#001F3F]">#{userData.registrySerial}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* PERFORMANCE METRIC */}
+            <div className="bg-[#001F3F] rounded-[3rem] p-10 text-white shadow-2xl shadow-blue-900/40 relative overflow-hidden">
+               <Activity className="absolute -right-4 -top-4 opacity-10 w-40 h-40" />
+               <p className="text-[10px] font-black tracking-[0.4em] uppercase text-blue-400 mb-6">Mission_Efficiency</p>
+               <div className="flex items-end gap-2 mb-2">
+                  <span className="text-6xl font-black italic tracking-tighter leading-none">98.4</span>
+                  <span className="text-xl font-black italic text-blue-400 mb-1">%</span>
+               </div>
+               <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+                  <div className="w-[98.4%] h-full bg-[#007BFF] animate-pulse"></div>
+               </div>
+            </div>
+          </div>
+
+          {/* --- RIGHT: OPERATIONAL DATA --- */}
+          <div className="lg:col-span-8 space-y-10">
+            
+            {/* CORE ATTRIBUTES */}
+            <div className="bg-white/80 backdrop-blur-xl border border-white rounded-[4rem] p-12 shadow-2xl shadow-blue-900/5">
+              <div className="flex items-center gap-4 mb-12">
+                <div className="p-3 border border-blue-50 rounded-2xl bg-white text-[#007BFF] shadow-sm"><ShieldCheck size={20}/></div>
+                <span className="text-[12px] font-black uppercase tracking-[0.4em] text-blue-300 italic">Operational_Attributes</span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                <ProfileField label="Identity_Callsign" value={userData.callsign} icon={<User size={16}/>} />
+                <ProfileField label="Registry_Serial" value={`# ${userData.registrySerial}`} icon={<Award size={16}/>} />
+                <ProfileField label="Experience_Log" value={userData.experience} icon={<Clock size={16}/>} />
+                <ProfileField label="Primary_Deployment" value="SECTOR_BLUE_MUMBAI" icon={<MapPin size={16}/>} />
+              </div>
+            </div>
+
+            {/* RECENT MISSION FEED */}
+            <div className="bg-white/80 backdrop-blur-xl border border-white rounded-[4rem] p-12 shadow-2xl shadow-blue-900/5">
+              <div className="flex items-center justify-between mb-10">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 border border-blue-50 rounded-2xl bg-white text-[#007BFF] shadow-sm"><Activity size={20}/></div>
+                  <span className="text-[12px] font-black uppercase tracking-[0.4em] text-blue-300 italic">Mission_Experience_Log</span>
+                </div>
+                <button className="text-[10px] font-black text-[#007BFF] uppercase tracking-widest flex items-center gap-2 hover:gap-4 transition-all">
+                  Full_Log <ChevronRight size={14}/>
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                {[1, 2, 3].map((_, i) => (
+                  <div key={i} className="flex items-center justify-between p-6 bg-blue-50/30 border border-blue-100 rounded-3xl group hover:bg-white transition-all cursor-pointer">
+                    <div className="flex items-center gap-6">
+                      <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center border border-blue-50 text-[#001F3F] font-black">0{i+1}</div>
+                      <div>
+                        <p className="text-[12px] font-black text-[#001F3F]">VECTOR_LOCK: {userData.lastMission}</p>
+                        <p className="text-[10px] font-black text-blue-200">2026-03-27 // STATUS: SUCCESS</p>
+                      </div>
+                    </div>
+                    <ChevronRight size={18} className="text-blue-100 group-hover:text-[#007BFF] transition-colors" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
-
-  return (
-    <div style={{ fontFamily: fontStack }} className="max-w-5xl mx-auto p-6 md:p-12 text-slate-900 selection:bg-indigo-500 selection:text-white">
-      
-      {/* 💳 HEADER & ID CARD INTERFACE */}
-      <header className="flex flex-col md:flex-row items-center gap-10 mb-16 pb-12 border-b border-slate-200">
-        <div 
-          className="relative w-44 h-44 rounded-[2.5rem] bg-white border-4 border-white shadow-2xl overflow-hidden group cursor-pointer"
-          onClick={() => !uploading && fileInputRef.current.click()}
-        >
-          {profile.photoUrl ? (
-            <img src={profile.photoUrl} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt="Profile" />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-slate-100">
-               <User size={60} className="text-slate-300" />
-            </div>
-          )}
-          
-          {/* Active Scan Line */}
-          <motion.div 
-            animate={{ top: ["-5%", "105%"] }} 
-            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute left-0 right-0 h-[3px] bg-indigo-500 shadow-[0_0_20px_#4f46e5] z-20 opacity-50"
-          />
-
-          <div className={`absolute inset-0 bg-indigo-900/40 backdrop-blur-sm flex flex-col items-center justify-center gap-2 transition-all duration-500 ${uploading ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-            {uploading ? <RefreshCw className="animate-spin text-white" /> : <UploadCloud className="text-white" size={32} />}
-            <span className="text-[10px] font-extrabold text-white uppercase tracking-widest">{uploading ? 'Syncing...' : 'Update_Visual'}</span>
-          </div>
-          
-          <input type="file" ref={fileInputRef} hidden accept="image/*" onChange={handlePhotoIngest} />
-        </div>
-
-        <div className="text-center md:text-left space-y-4">
-          <div className="flex flex-wrap justify-center md:justify-start gap-3">
-            <span className="px-4 py-1 bg-emerald-500 text-white text-[10px] font-black rounded-full uppercase tracking-widest shadow-lg shadow-emerald-200">Active_Duty</span>
-            <span className="px-4 py-1 bg-white border border-slate-200 text-slate-400 text-[10px] font-black rounded-full uppercase tracking-widest">Clearance_B9</span>
-          </div>
-          <h1 className="text-6xl font-extrabold tracking-tight text-slate-900 italic uppercase leading-none">
-            Personnel_<span className="text-indigo-600">Dossier</span>
-          </h1>
-          <p className="text-slate-400 text-sm font-bold tracking-[0.2em] uppercase flex items-center justify-center md:justify-start gap-3">
-            <Terminal size={14} /> Master_Record // {profile.id?.slice(-12).toUpperCase() || 'UNINITIALIZED'}
-          </p>
-        </div>
-      </header>
-
-      <form onSubmit={handleUpdate} className="grid grid-cols-1 md:grid-cols-2 gap-10">
-        
-        {/* INPUT: CALLSIGN */}
-        <div className="space-y-3 group">
-          <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Identity_Callsign</label>
-          <div className="relative">
-             <User size={20} className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-600 transition-colors" />
-             <input 
-               className="w-full bg-white border border-slate-200 p-6 pl-14 rounded-3xl outline-none focus:ring-4 focus:ring-indigo-50 focus:border-indigo-500 transition-all font-bold text-xl text-slate-900" 
-               value={profile.name} 
-               placeholder="NAME_UNSET"
-               onChange={(e) => setProfile({...profile, name: e.target.value})} 
-             />
-          </div>
-        </div>
-
-        {/* INPUT: EMP ID */}
-        <div className="space-y-3 group">
-          <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Registry_Serial</label>
-          <div className="relative">
-             <Hash size={20} className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-600 transition-colors" />
-             <input 
-               className="w-full bg-white border border-slate-200 p-6 pl-14 rounded-3xl outline-none focus:ring-4 focus:ring-indigo-50 focus:border-indigo-500 transition-all font-bold text-xl text-slate-900 placeholder:text-slate-200" 
-               value={profile.empId} 
-               placeholder="E_XXXX_00"
-               onChange={(e) => setProfile({...profile, empId: e.target.value})} 
-             />
-          </div>
-        </div>
-
-        {/* TEXTAREA: BIO */}
-        <div className="md:col-span-2 space-y-3">
-          <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Mission_Experience_Log</label>
-          <div className="relative">
-             <textarea 
-               className="w-full bg-white border border-slate-200 p-8 rounded-[2.5rem] outline-none focus:ring-4 focus:ring-indigo-50 focus:border-indigo-500 transition-all font-bold text-lg text-slate-900 h-48 resize-none leading-relaxed placeholder:text-slate-200"
-               value={profile.bio}
-               onChange={(e) => setProfile({...profile, bio: e.target.value})}
-               placeholder="RECORDS_EMPTY: INPUT_FLIGHT_HOURS_AND_MISSION_LOGS..."
-             />
-             <div className="absolute bottom-6 right-8 opacity-10">
-               <ShieldCheck size={60} />
-             </div>
-          </div>
-        </div>
-
-        {/* SUBMIT BUTTON */}
-        <button 
-          type="submit"
-          disabled={saving || uploading}
-          className="md:col-span-2 relative group overflow-hidden bg-slate-900 hover:bg-indigo-600 text-white p-8 rounded-[2rem] font-bold uppercase text-lg tracking-[0.4em] transition-all duration-500 shadow-2xl shadow-indigo-200 disabled:opacity-50 active:scale-[0.98]"
-        >
-          <div className="flex items-center justify-center gap-4 relative z-10">
-            {saving ? <RefreshCw className="animate-spin" size={24} /> : <BadgeCheck size={24} />}
-            {saving ? "Uplinking_To_Core..." : "Authorize_Dossier_Update"}
-          </div>
-          
-          {/* Animated Background Overlay */}
-          <motion.div 
-            initial={{ x: "-100%" }}
-            whileHover={{ x: "100%" }}
-            transition={{ duration: 0.8 }}
-            className="absolute inset-0 bg-white/10 skew-x-12"
-          />
-        </button>
-      </form>
-
-      {/* FOOTER HUD */}
-      <footer className="mt-16 pt-10 border-t border-slate-200 flex flex-col md:flex-row justify-between items-center gap-6">
-        <div className="flex items-center gap-4 text-slate-400 text-[10px] font-bold uppercase tracking-widest italic">
-          <Fingerprint size={16} /> Data_Encryption: RSA_4096_Locked
-        </div>
-        <div className="flex gap-10">
-          <span className="text-[10px] font-black text-slate-300 uppercase tracking-tighter">Status: Synchronized</span>
-          <span className="text-[10px] font-black text-indigo-500 uppercase tracking-tighter">Node: B9_ALFA</span>
-        </div>
-      </footer>
-    </div>
-  );
 }
+
+// --- SHARED COMPONENT ---
+const ProfileField = ({ label, value, icon }) => (
+  <div className="flex flex-col gap-4">
+    <label className="text-[13px] font-black text-blue-300 uppercase tracking-widest italic ml-2 flex items-center gap-2">
+      {icon} {label}
+    </label>
+    <div className="bg-[#F4F9FF] border border-blue-100 rounded-2xl p-6 text-[15px] text-[#001F3F] font-black italic shadow-inner flex items-center justify-between">
+      {value}
+      <div className="w-2 h-2 rounded-full bg-blue-100"></div>
+    </div>
+  </div>
+);

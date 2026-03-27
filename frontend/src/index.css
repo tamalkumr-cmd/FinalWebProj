@@ -1,81 +1,35 @@
-@import url('https://rsms.me/inter/inter.css');
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;600;800&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
 @layer base {
-    body {
-        /* Strictly Apple-style System Font Stack */
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        @apply bg-black text-white antialiased overflow-x-hidden;
-    }
-    /* 🛰️ CORRECT SELECTION SYNTAX (Outside of @apply) */
-     ::selection {
-        background-color: white;
-        color: black;
-    }
-     ::-moz-selection {
-        background-color: white;
-        color: black;
-    }
-    html.lenis {
-        height: auto;
-    }
-    .lenis.lenis-smooth {
-        scroll-behavior: auto;
-    }
+  body {
+    /* Greyish White Background & Black Text */
+    @apply bg-[#F8F9FA] text-[#1A1A1A] antialiased;
+    font-family: 'Inter', sans-serif;
+  }
 }
 
 @layer components {
-    .text-outline-mono {
-        -webkit-text-stroke: 1px rgba(255, 255, 255, 0.1);
-        color: transparent;
-    }
-    .btn-mono {
-        @apply border border-white/20 px-10 py-5 uppercase text-[10px] tracking-[0.4em] font-black transition-all duration-700;
-    }
-    /* Fixed hover syntax */
-    .btn-mono:hover {
-        @apply bg-white text-black border-white;
-    }
-    .glass-dark {
-        @apply bg-zinc-900/20 backdrop-blur-3xl border border-white/5;
-    }
-}
+  /* The "Teacher-Friendly" Title: Professional Serif */
+  .academic-title {
+    font-family: 'Crimson Pro', serif;
+    @apply text-4xl font-bold tracking-tight text-black border-b border-black/10 pb-4 mb-8;
+  }
 
+  /* Professional Data Table Label */
+  .table-label {
+    @apply text-[11px] font-bold uppercase tracking-widest text-zinc-500 mb-2 block;
+  }
 
-/* --- INDUSTRIAL UTILITIES --- */
+  /* Clean White Card */
+  .professional-card {
+    @apply bg-white border border-zinc-200 rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow;
+  }
 
-::-webkit-scrollbar {
-    width: 2px;
-}
-
-::-webkit-scrollbar-track {
-    background: #000;
-}
-
-::-webkit-scrollbar-thumb {
-    background: #222;
-}
-
-.noise-texture {
-    position: fixed;
-    inset: 0;
-    z-index: 9999;
-    pointer-events: none;
-    opacity: 0.03;
-    background-image: url('https://grainy-gradients.vercel.app/noise.svg');
-}
-
-@keyframes marquee {
-    from {
-        transform: translateX(0);
-    }
-    to {
-        transform: translateX(-50%);
-    }
-}
-
-.animate-marquee {
-    animation: marquee 30s linear infinite;
+  /* Simple Black Button */
+  .btn-primary {
+    @apply bg-black text-white px-6 py-2 rounded-lg font-medium text-sm hover:bg-zinc-800 transition-colors;
+  }
 }
