@@ -9,28 +9,27 @@ import { sendMail } from "../utils/mailer.js";
 // ==========================================
 export async function register(req, res) {
     try {
-        const { email, password } = req.body;
+        const { email: rawEmail, password } = req.body;
+        const email = rawEmail.toLowerCase().trim(); // Case-insensitive fix
 
         if (!email || !password)
             return res.status(400).json({ error: "Email and password required" });
 
         const existing = await prisma.user.findUnique({ where: { email } });
         if (existing)
-            return res.status(400).json({ error: "Personnel record already exists for this email." });
+            return res.status(400).json({ error: "Personnel record already exists." });
 
         const hash = await bcrypt.hash(password, 10);
         const code = String(generateOtp());
 
-        // Cleanup old attempts
         await prisma.otp.deleteMany({ where: { email } });
 
-        // Store OTP + Hash with a 5-minute window
         await prisma.otp.create({
             data: {
                 email,
                 code,
                 password: hash,
-                expiresAt: new Date(Date.now() + 5 * 60 * 1000), // 5 MINUTES
+                expiresAt: new Date(Date.now() + 5 * 60 * 1000),
             },
         });
 
@@ -38,11 +37,10 @@ export async function register(req, res) {
             email,
             "Sky_Link.os // Verification Code",
             `<h1>Authentication Required</h1>
-             <p>Your unique access code is: <strong>${code}</strong></p>
-             <p>This frequency is active for 5 minutes.</p>`
+             <p>Your unique access code is: <strong>${code}</strong></p>`
         );
 
-        console.log(`📡 [OTP_SENT]: Code ${code} transmitted to ${email}`);
+        console.log(`📡 [OTP_SENT]: Transmitted to ${email}`);
         res.json({ message: "OTP transmitted to email." });
     } catch (err) {
         console.error("❌ [REGISTER_ERROR]:", err);
@@ -51,63 +49,45 @@ export async function register(req, res) {
 }
 
 // ==========================================
-// 🔑 VERIFY OTP (SYNC & AUTO-LOGIN)
+// 🔑 VERIFY OTP
 // ==========================================
 export async function verifyOtp(req, res) {
     try {
-        const { email, code } = req.body;
-
-        if (!email || !code)
-            return res.status(400).json({ error: "Email and code required" });
+        const { email: rawEmail, code } = req.body;
+        const email = rawEmail.toLowerCase().trim();
 
         const otp = await prisma.otp.findFirst({
             where: { email },
             orderBy: { createdAt: "desc" },
         });
 
-        if (!otp) return res.status(400).json({ error: "No active verification found." });
-
-        // 🕒 Check Expiration
-        if (new Date() > new Date(otp.expiresAt)) {
-            await prisma.otp.deleteMany({ where: { email } });
-            return res.status(400).json({ error: "TRANSMISSION_TIMEOUT: Code expired." });
+        if (!otp || new Date() > new Date(otp.expiresAt)) {
+            return res.status(400).json({ error: "Code expired or not found." });
         }
 
-        // 🛡️ Verify Match
         if (String(code).trim() !== String(otp.code).trim())
             return res.status(400).json({ error: "Invalid verification code." });
 
-        // 👤 Create Personnel Profile
         const user = await prisma.user.create({
             data: {
                 email,
-                password: otp.password, // This is already the hash from the OTP table
+                password: otp.password,
                 isVerified: true,
                 name: email.split("@")[0],
                 designation: "FLIGHT_OFFICER",
             },
         });
 
-        // Cleanup
         await prisma.otp.deleteMany({ where: { email } });
 
-        // 🎟️ GENERATE PASSPORT (JWT)
         const token = jwt.sign({ id: user.id, email: user.email },
-            process.env.JWT_SECRET || "NORSAVIA_DEFAULT_SECRET", { expiresIn: "7d" }
+            process.env.JWT_SECRET || "SKY_LINK_SECURE_KEY", { expiresIn: "7d" }
         );
 
-        console.log(`✅ [PERSONNEL_ACTIVATED]: ${email} is now online.`);
-
-        res.json({
-            message: "Signal Verified. Welcome to Sky_Link.",
-            token,
-            user: { id: user.id, email: user.email }
-        });
-
+        res.json({ message: "Signal Verified.", token, user: { id: user.id, email: user.email } });
     } catch (err) {
         console.error("❌ [VERIFY_ERROR]:", err);
-        if (err.code === 'P2002') return res.status(400).json({ error: "User already registered." });
-        res.status(500).json({ error: "Verification process failed." });
+        res.status(500).json({ error: "Verification failed." });
     }
 }
 
@@ -116,38 +96,31 @@ export async function verifyOtp(req, res) {
 // ==========================================
 export async function login(req, res) {
     try {
-        const { email, password } = req.body;
-        console.log(`📡 [LOGIN_ATTEMPT]: Intercepting signal from ${email}`);
+        const { email: rawEmail, password } = req.body;
+        if (!rawEmail || !password) return res.status(400).json({ error: "Credentials missing." });
 
-        if (!email || !password)
-            return res.status(400).json({ error: "Email and password required" });
+        const email = rawEmail.toLowerCase().trim();
+        console.log(`📡 [LOGIN_ATTEMPT]: ${email}`);
 
         const user = await prisma.user.findUnique({ where: { email } });
 
         if (!user) {
-            console.warn(`⚠️ [AUTH_FAILED]: Identity ${email} not found in database.`);
+            console.warn(`⚠️ [AUTH_FAILED]: ${email} not found.`);
             return res.status(400).json({ error: "Personnel not found." });
         }
 
-        if (!user.isVerified) {
-            console.warn(`⚠️ [AUTH_FAILED]: Account ${email} is locked (OTP pending).`);
-            return res.status(400).json({ error: "Account verification pending." });
-        }
-
-        // 🛡️ The critical comparison
         const ok = await bcrypt.compare(password, user.password);
 
         if (!ok) {
-            console.error(`❌ [CIPHER_MISMATCH]: Incorrect key for ${email}.`);
+            console.error(`❌ [PASSWORD_MISMATCH]: Failed key for ${email}`);
             return res.status(400).json({ error: "Access Denied: Invalid Password." });
         }
 
         const token = jwt.sign({ id: user.id, email: user.email },
-            process.env.JWT_SECRET || "NORSAVIA_DEFAULT_SECRET", { expiresIn: "7d" }
+            process.env.JWT_SECRET || "SKY_LINK_SECURE_KEY", { expiresIn: "7d" }
         );
 
-        console.log(`🟢 [LOGIN_SUCCESS]: Access granted to ${user.name}`);
-
+        console.log(`🟢 [LOGIN_SUCCESS]: ${user.name} online.`);
         res.json({ token, user: { id: user.id, name: user.name } });
     } catch (err) {
         console.error("❌ [AUTH_CRITICAL_FAILURE]:", err.message);
