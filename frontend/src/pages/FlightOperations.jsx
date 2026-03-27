@@ -19,7 +19,6 @@ export default function FlightOperations({ selectedFlight }) {
   const [searchTerm, setSearchTerm] = useState("");
   const logEndRef = useRef(null);
 
-  // Apple System Font Stack
   const fontStack = "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', sans-serif";
   const aircraftModel = selectedFlight?.aircraftModel || "UNKNOWN_VESSEL";
   const capacity = selectedFlight?.seatsCount || 180;
@@ -47,19 +46,62 @@ export default function FlightOperations({ selectedFlight }) {
     return true;
   };
 
+  // --- UPDATED BOARDING PASS GENERATOR ---
   const downloadPassPack = () => {
     if (manifest.length === 0) return;
     addLog("GENERATING_MISSION_CREDENTIALS...", "warn");
+    
+    // Standard Landscape Orientation [150mm x 60mm]
     const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: [150, 60] });
 
     manifest.forEach((p, index) => {
-      doc.setFillColor(28, 28, 30); doc.rect(0, 0, 150, 60, "F");
-      doc.setFillColor(0, 122, 255); doc.rect(0, 0, 150, 2, "F");
-      doc.setTextColor(255, 255, 255); doc.setFont("helvetica", "bold"); doc.setFontSize(14);
-      doc.text(`MISSION: ${flightId}`, 10, 20);
-      doc.setTextColor(0, 122, 255); doc.setFontSize(36); doc.text(p.seat, 75, 48);
+      // 1. Base Card Layer
+      doc.setFillColor(255, 255, 255);
+      doc.rect(0, 0, 150, 60, "F");
+
+      // 2. Sector Blue Protocol Strip (Left Sidebar)
+      doc.setFillColor(0, 122, 255); 
+      doc.rect(0, 0, 10, 60, "F");
+
+      // 3. Labeling Headers
+      doc.setTextColor(142, 142, 147);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8);
+      doc.text("OPERATOR_IDENTITY", 18, 12);
+      doc.text("MISSION_ID", 100, 12);
+
+      // 4. Passenger Details & Flight ID
+      doc.setTextColor(28, 28, 30);
+      doc.setFontSize(16);
+      doc.text(p.name ? p.name.toUpperCase() : "IDENT_UNKNOWN", 18, 22);
+      doc.text(flightId, 100, 22);
+
+      // 5. Seat Assignment (Large Tactical Text)
+      doc.setTextColor(142, 142, 147);
+      doc.setFontSize(8);
+      doc.text("ASSIGNED_GRID_NODE", 18, 38);
+      
+      doc.setTextColor(0, 122, 255);
+      doc.setFontSize(38);
+      doc.text(p.seat || "00", 18, 54);
+
+      // 6. Security Watermark & Integrity Status
+      doc.setTextColor(52, 199, 89);
+      doc.setFontSize(9);
+      doc.text("VERIFIED_UPLINK", 100, 38);
+      
+      // 7. Tactical Visual Elements (Lines and Barcode)
+      doc.setDrawColor(242, 242, 247);
+      doc.line(15, 28, 140, 28);
+      
+      for(let i=0; i<25; i++) {
+        doc.setFillColor(28, 28, 30, 0.1);
+        doc.rect(100 + (i * 1.6), 46, 0.6, 8, "F");
+      }
+
       if (index < manifest.length - 1) doc.addPage([150, 60], "landscape");
     });
+
     doc.save(`MANIFEST_${flightId}.pdf`);
     addLog("EXPORT_COMPLETE: PACKETS_DEPLOYED", "success");
   };
@@ -94,7 +136,6 @@ export default function FlightOperations({ selectedFlight }) {
   return (
     <div style={{ fontFamily: fontStack }} className="max-w-[1700px] mx-auto p-5 md:p-8 text-[#1C1C1E] selection:bg-[#007AFF] selection:text-white bg-[#F2F2F7] min-h-screen">
       
-      {/* 📡 TOP HUD BAR */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-5 mb-8">
         <StatusCard label="MISSION_ID" value={flightId} icon={<Plane size={16}/>} />
         <StatusCard label="VESSEL_TYPE" value={aircraftModel} icon={<Cpu size={16}/>} />
@@ -106,7 +147,6 @@ export default function FlightOperations({ selectedFlight }) {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         
-        {/* 🛠️ WIDE SEAT PREVIEW WINDOW (75% Width) */}
         <div className="lg:col-span-9 flex flex-col gap-6">
           <div className="bg-white border border-[#D1D1D6] p-8 md:p-10 rounded-[2.5rem] shadow-xl shadow-black/5 relative min-h-[80vh] flex flex-col">
             <header className="flex justify-between items-center mb-8 border-b border-[#F2F2F7] pb-6">
@@ -153,10 +193,7 @@ export default function FlightOperations({ selectedFlight }) {
           </div>
         </div>
 
-        {/* 📊 TACTICAL SIDEBAR (25% Width) */}
         <div className="lg:col-span-3 space-y-6">
-          
-          {/* UPLOAD CONTROLLER */}
           <div className="bg-white border border-[#D1D1D6] p-6 rounded-[2.5rem] shadow-xl shadow-black/5 relative group overflow-hidden">
             <input type="file" id="xl" hidden onChange={handleUpload} />
             <label htmlFor="xl" className="cursor-pointer block text-center relative z-10">
@@ -168,7 +205,6 @@ export default function FlightOperations({ selectedFlight }) {
             </label>
           </div>
 
-          {/* MANIFEST LIST */}
           <div className="bg-white border border-[#D1D1D6] rounded-[2.5rem] p-6 h-[380px] flex flex-col shadow-xl">
              <h4 className="text-[10px] font-black text-[#8E8E93] uppercase tracking-widest mb-4 flex items-center gap-2 italic">
                 <Users size={12} className="text-[#007AFF]"/> Data_Stream
@@ -188,7 +224,6 @@ export default function FlightOperations({ selectedFlight }) {
              </div>
           </div>
 
-          {/* CONSOLE OUTPUT */}
           <div className="bg-[#1C1C1E] border border-black rounded-[2rem] p-6 h-[220px] flex flex-col shadow-2xl">
             <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-3">
               <div className="flex items-center gap-2 text-[#007AFF] text-[10px] font-black uppercase tracking-widest leading-none">
@@ -220,8 +255,6 @@ export default function FlightOperations({ selectedFlight }) {
   );
 }
 
-// --- TACTICAL COMPONENTS ---
-
 function StatusCard({ label, value, icon, color = "text-[#1C1C1E]", progress }) {
   return (
     <div className="bg-white border border-[#D1D1D6] p-5 md:p-6 rounded-[2.5rem] relative overflow-hidden shadow-lg shadow-black/5 group">
@@ -251,7 +284,7 @@ function NoFlightSelected() {
       </motion.div>
       <h2 className="text-4xl font-extrabold text-[#1C1C1E] italic uppercase tracking-tight">Node_Offline</h2>
       <button className="mt-12 flex items-center gap-3 text-[#007AFF] font-black uppercase text-xs tracking-[0.3em] hover:gap-6 transition-all group">
-         Navigate to Registry <ArrowRight size={16} className="group-hover:translate-x-2 transition-transform" />
+          Navigate to Registry <ArrowRight size={16} className="group-hover:translate-x-2 transition-transform" />
       </button>
     </div>
   );
